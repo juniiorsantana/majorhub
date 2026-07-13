@@ -1,0 +1,273 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sora: var(--font-sora), sans-serif;
+  --font-inter: var(--font-inter), sans-serif;
+
+  --color-brand-deep: #001a2e;
+  --color-brand-dark: #0a2540;
+  --color-brand-cyan: #00e5ff;
+  --color-brand-blue: #0099ff;
+  --color-brand-indigo: #667eea;
+
+  --color-text-primary: #e0e7ff;
+  --color-text-secondary: #bae6fd;
+  --color-text-meta: #7dd3fc;
+}
+
+/* ─── Variáveis de Design ─── */
+:root {
+  --font-sora: 'Sora', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+
+  /* Cores */
+  --color-deep:    #001a2e;
+  --color-dark:    #0a2540;
+  --color-cyan:    #00e5ff;
+  --color-blue:    #0099ff;
+  --color-indigo:  #667eea;
+
+  /* Texto */
+  --color-text-primary:   #e0e7ff;
+  --color-text-secondary: #bae6fd;
+  --color-text-meta:      #7dd3fc;
+
+  /* Superfícies */
+  --color-card-bg:     rgba(10, 37, 64, 0.60);
+  --color-border:      rgba(0, 229, 255, 0.20);
+  --color-border-hover:rgba(0, 229, 255, 0.50);
+
+  /* Motion */
+  --motion-fast:   0.15s;
+  --motion-base:   0.3s;
+  --motion-slow:   0.8s;
+  --motion-xslow:  2s;
+
+  --ease-out:    cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Stagger */
+  --stagger-1: 0.05s;
+  --stagger-2: 0.10s;
+  --stagger-3: 0.15s;
+  --stagger-4: 0.20s;
+  --stagger-5: 0.25s;
+  --stagger-6: 0.30s;
+}
+
+/* ─── Base ─── */
+html { scroll-behavior: auto; } /* Lenis assume o scroll */
+
+@layer base {
+  body {
+    background: linear-gradient(180deg, var(--color-dark) 0%, var(--color-deep) 100%);
+    color: var(--color-text-primary);
+    font-family: var(--font-inter);
+    overflow-x: hidden;
+  }
+
+  /* Âncoras não ficam escondidas atrás da navbar fixa */
+  section[id] {
+    scroll-margin-top: 88px;
+  }
+
+  /* Foco visível para navegação por teclado */
+  :focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: rgba(0, 229, 255, 0.3);
+    color: #fff;
+  }
+}
+
+/* ─── Keyframes ─── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes highlightExpand {
+  from { background-size: 0% 100%; }
+  to   { background-size: 100% 100%; }
+}
+
+@keyframes highlightBg {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes softPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+
+@keyframes phRectAppear {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Utilitários ─── */
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, var(--color-cyan) 0%, var(--color-blue) 50%, var(--color-indigo) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .glassmorphism {
+    background: var(--color-card-bg);
+    backdrop-filter: blur(16px) saturate(130%);
+    border: 2px solid var(--color-border);
+    border-radius: 16px;
+  }
+
+  .dot-pattern {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+/* ─── Acessibilidade ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Botão Brilho ───────────────────────────────── */
+
+/* Container externo — anel de glow */
+.brilho1 {
+  width: fit-content;
+  overflow: visible;
+  z-index: 1;
+  position: relative;
+  padding: 0px !important;
+  border-radius: 100px;
+  outline: 4px solid rgba(255, 7, 255, 0.39);
+}
+
+/* Glow esquerda → direita (estado padrão) */
+.brilho1::before {
+  transition: 0.35s ease-out;
+  filter: blur(16px);
+  background: linear-gradient(to right, transparent 90%, #1F3CCF 80%, #0099FF 95%);
+  width: 108%;
+  height: 125%;
+  left: 50%;
+  top: 50%;
+  content: "";
+  will-change: filter;
+  border-radius: 100px;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  opacity: var(--before-opacity, 1);
+}
+
+/* Glow direita → esquerda (espelho, ativado no hover) */
+.brilho1::after {
+  transition: 0.35s ease-out;
+  filter: blur(12px);
+  background: linear-gradient(to left, transparent 30%, #1F3CCF 80%, #0099FF 95%);
+  width: 108%;
+  height: 125%;
+  left: 50%;
+  top: 50%;
+  content: "";
+  will-change: filter;
+  border-radius: 100px;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  opacity: var(--after-opacity, 0);
+}
+
+/* Wrapper do botão — contém o brilho interno */
+.brilho2 {
+  z-index: 5;
+  overflow: hidden;
+  border-radius: 100px;
+  position: relative;
+}
+
+/* Botão principal */
+.brilho2 .elementor-button {
+  background: #2C9FFF !important;
+  border: 2px solid #00f2fe;
+  padding: 15px 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 100px;
+  position: relative;
+  transition: 2s;
+  text-decoration: none;
+  color: #0f1d77;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  gap: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 767px) {
+  .brilho2 .elementor-button {
+    padding: 15px 30px;
+  }
+}
+
+/* Luz interna que segue o cursor horizontalmente */
+.brilho2 .elementor-button::before {
+  background-image: radial-gradient(
+    43.3% 44.23% at 50% 49.51%,
+    #FFFFFF 19%,
+    #b8d2ff 18.5%,
+    #70C8FF 70.71%,
+    rgba(244, 210, 191, 0) 100%
+  );
+  filter: blur(16px);
+  width: 300px;
+  height: 150px;
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(var(--button-translate-x, -10%), -50%);
+  border-radius: 100%;
+  transition: transform 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Quando hovering — luz segue o mouse em tempo real (transição rápida) */
+.brilho2 .elementor-button.hovering::before {
+  transition: transform 0.15s ease-out !important;
+}
+
+/* Texto e ícone ficam acima do efeito de luz */
+.brilho2 .elementor-button-text,
+.brilho2 .elementor-button-icon {
+  z-index: 5;
+  align-self: center !important;
+  position: relative;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 10px rgba(0, 0, 0, 0.2);
+  font-weight: 700;
+}
