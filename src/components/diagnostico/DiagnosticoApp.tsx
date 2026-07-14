@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { copy } from '@/content/copy'
 import { diagnosticoCopy } from '@/content/diagnostico-copy'
 import type { DiagnosticoResultado } from '@/lib/diagnostico/types'
+import { bandaDaNota } from '@/lib/diagnostico/score'
 import { ScoreGauge } from './ScoreGauge'
 import { CategoryScoreCard } from './CategoryScoreCard'
 import { LeadForm } from './LeadForm'
@@ -61,11 +62,16 @@ export function DiagnosticoApp() {
     // Garante tempo mínimo de exibição do modal (as animações contam a história da análise)
     const minDelay = new Promise(resolve => setTimeout(resolve, MIN_ANALYSIS_MS))
 
+    // Timeout do lado do cliente: sem ele, uma API travada deixa o usuário preso no modal
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 40_000)
+
     try {
       const request = fetch('/api/diagnostico', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
+        signal: controller.signal,
       }).then(async res => ({ res, data: await res.json() }))
 
       const [{ res, data }] = await Promise.all([request, minDelay])
@@ -83,6 +89,8 @@ export function DiagnosticoApp() {
       await minDelay
       setErro(diagnosticoCopy.erroAnalise)
       setStatus('erro')
+    } finally {
+      clearTimeout(timeout)
     }
   }
 
@@ -135,7 +143,9 @@ export function DiagnosticoApp() {
                   Nota de {resultado.dominio}
                 </p>
                 <ScoreGauge nota={resultado.notaGeral} faixa={resultado.faixaGeral} />
-                <p className="text-slate-600 max-w-lg">{diagnosticoCopy.faixaMensagem[resultado.faixaGeral]}</p>
+                <p className="text-slate-600 max-w-lg">
+                  {diagnosticoCopy.direcaoGeral[bandaDaNota(resultado.notaGeral)]}
+                </p>
               </div>
             </div>
 
@@ -145,7 +155,9 @@ export function DiagnosticoApp() {
               ))}
             </div>
 
-            {!unlocked && <LeadForm onUnlock={() => setUnlocked(true)} />}
+            {!unlocked && (
+              <LeadForm onUnlock={() => setUnlocked(true)} dominio={resultado.dominio} nota={resultado.notaGeral} />
+            )}
 
             {unlocked && servicoRecomendado && (
               <div className="rounded-3xl bg-[#0a2540] p-8 md:p-12 text-center overflow-hidden relative">

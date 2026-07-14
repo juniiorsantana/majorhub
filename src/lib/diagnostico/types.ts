@@ -1,11 +1,16 @@
 export type Faixa = 'critico' | 'regular' | 'bom' | 'otimo'
 
+/** Bandas granulares de score, usadas nas mensagens de direção (nota geral e categoria IA) */
+export type Banda = '0-20' | '21-40' | '41-50' | '51-60' | '61-75' | '76-85' | '86-100'
+
 export type CategoriaId = 'desempenho' | 'seo' | 'ia' | 'presenca'
 
 export interface CheckItem {
   label: string
   passed: boolean
   detail?: string
+  /** Recomendação de correção, exibida quando o check falha (conteúdo desbloqueável) */
+  dica?: string
 }
 
 export interface CategoryResult {
@@ -55,7 +60,11 @@ export interface SiteAudit {
   ogImage?: string
   favicon: boolean
   hasOrganizationOrLocalBusiness: boolean
+  /** Tipos Schema.org de negócio encontrados (ex: ['Physician']) — evidência exibida no relatório */
+  businessSchemaTypes: string[]
   hasFaqPage: boolean
+  /** Há seção de FAQ visível no texto da página (mesmo sem marcação FAQPage) */
+  hasFaqText: boolean
   socialLinksCount: number
   textToHtmlRatio: number
   robots: RobotsAnalise
