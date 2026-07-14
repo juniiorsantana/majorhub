@@ -1,0 +1,29 @@
+# MajorHub
+
+> A MajorHub é uma agência brasileira de marketing, performance e criatividade que estrutura o comercial, constrói sites profissionais e desenvolve a identidade visual de empresas que querem crescer no digital com seriedade.
+
+A MajorHub funciona como um time de marketing completo sob demanda — estrategista, designer, desenvolvedor e especialista em vendas — para empresas que já vendem (geralmente no boca a boca) e querem escalar com previsibilidade. Atende empresas de diversos segmentos em todo o Brasil.
+
+## Serviços
+
+- **Estruturação Comercial**: diagnóstico comercial, definição de cliente ideal, funil de vendas, qualificação de leads, scripts de abordagem e integração entre marketing e vendas.
+- **Site Profissional**: estratégia de conversão, copywriting, design responsivo, performance otimizada e integração com WhatsApp, CRM e automações.
+- **Identidade Visual**: diagnóstico de marca, logotipo, sistema de identidade, manual de marca e aplicações prioritárias.
+
+## Processo
+
+1. Diagnóstico (semana 1) — entendimento do negócio, mercado e gargalo.
+2. Estratégia (semana 2) — desenho do caminho antes de qualquer execução.
+3. Execução (semanas 3 a 6) — entrega com prazo e qualidade.
+4. Acompanhamento (contínuo) — monitoramento e ajuste de resultados.
+
+## Páginas principais
+
+- [Home](https://majorhub.com.br): apresentação dos serviços, portfólio e processo.
+- [Diagnóstico Grátis](https://majorhub.com.br/diagnostico): ferramenta gratuita que analisa a presença digital de uma empresa e mostra se ela aparece quando a IA responde.
+- [Blog](https://majorhub.com.br/blog): análises práticas sobre automação, IA, WhatsApp, marketing de performance e vendas.
+
+## Contato
+
+- WhatsApp: +55 65 99217-8164 (https://wa.me/5565992178164)
+- Idioma: Português (Brasil)

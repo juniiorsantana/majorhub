@@ -6,6 +6,7 @@ import { Servicos }      from '@/components/sections/Servicos'
 import { Portfolio }     from '@/components/sections/Portfolio'
 import { Diferencial }   from '@/components/sections/Diferencial'
 import { Processo }      from '@/components/sections/Processo'
+import { Faq }           from '@/components/sections/Faq'
 import { CtaFinal }      from '@/components/sections/CtaFinal'
 import { Footer }        from '@/components/sections/Footer'
 
@@ -20,6 +21,7 @@ export default function Home() {
       <Portfolio />
       <Diferencial />
       <Processo />
+      <Faq />
       <CtaFinal />
       <Footer />
     </main>

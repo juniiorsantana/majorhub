@@ -4,6 +4,7 @@ const NAV_LINKS = [
   { label: 'Serviços', href: '/#servicos' },
   { label: 'Portfólio', href: '/#portfolio' },
   { label: 'Processo', href: '/#processo' },
+  { label: 'Blog', href: '/blog' },
   { label: 'Diagnóstico Grátis', href: '/diagnostico' },
 ]
 

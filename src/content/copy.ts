@@ -91,6 +91,38 @@ export const copy = {
     ],
   },
 
+  faq: {
+    titulo: 'Perguntas Frequentes',
+    subtitulo: 'O que empresários costumam perguntar antes de fechar com a gente.',
+    items: [
+      {
+        pergunta: 'O que exatamente a MajorHub faz?',
+        resposta:
+          'A MajorHub estrutura o comercial, constrói sites profissionais e desenvolve a identidade visual de empresas que querem crescer no digital. Funcionamos como um time de marketing completo — estrategista, designer, desenvolvedor e especialista em vendas — sem que você precise contratar ninguém.',
+      },
+      {
+        pergunta: 'Preciso contratar os três serviços juntos?',
+        resposta:
+          'Não. Cada serviço pode ser contratado separadamente. No diagnóstico inicial, identificamos onde está o gargalo do seu negócio e recomendamos apenas o que realmente vai gerar resultado.',
+      },
+      {
+        pergunta: 'Quanto tempo leva um projeto?',
+        resposta:
+          'Nosso processo padrão leva de 4 a 6 semanas: diagnóstico na primeira semana, estratégia na segunda e execução entre as semanas 3 e 6. Depois da entrega, seguimos com acompanhamento contínuo de resultados.',
+      },
+      {
+        pergunta: 'Como funciona o início do trabalho?',
+        resposta:
+          'Começamos com uma conversa gratuita pelo WhatsApp para entender seu negócio. Se fizer sentido para os dois lados, fazemos um diagnóstico completo do seu mercado e do seu gargalo antes de qualquer execução. Estratégia sempre vem antes da execução.',
+      },
+      {
+        pergunta: 'A MajorHub atende empresas de qualquer segmento?',
+        resposta:
+          'Atendemos empresas de diversos segmentos em todo o Brasil, com foco em negócios que já vendem — geralmente no boca a boca — e querem estruturar o digital para escalar com previsibilidade.',
+      },
+    ],
+  },
+
   cta: {
     titulo: 'Pronto para estruturar sua operação?',
     texto: 'A conversa é gratuita. Se fizer sentido, a gente parte pro projeto.',

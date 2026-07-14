@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://majorhub.com.br'),
   title: 'MajorHub — Marketing, Performance e Criatividade',
   description: 'A MajorHub estrutura o comercial, constrói o site e lapida a identidade visual de empresas que querem crescer no digital com seriedade.',
+  alternates: { canonical: './' },
   openGraph: {
     title: 'MajorHub — Marketing, Performance e Criatividade',
     description: 'Sua empresa merece uma marca que vende.',
@@ -46,10 +47,55 @@ export const viewport: Viewport = {
   themeColor: '#001a2e',
 }
 
+// Dados estruturados: quem é a empresa (SEO + AEO)
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': ['Organization', 'ProfessionalService'],
+  '@id': 'https://majorhub.com.br/#organization',
+  name: 'MajorHub',
+  url: 'https://majorhub.com.br',
+  logo: 'https://majorhub.com.br/opengraph-image',
+  description:
+    'A MajorHub estrutura o comercial, constrói o site e lapida a identidade visual de empresas que querem crescer no digital com seriedade.',
+  areaServed: 'BR',
+  knowsAbout: [
+    'Estruturação comercial',
+    'Criação de sites profissionais',
+    'Identidade visual',
+    'Marketing digital',
+    'Automação de vendas',
+    'WhatsApp Business',
+  ],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'sales',
+    telephone: '+55-65-99217-8164',
+    availableLanguage: 'Portuguese',
+  },
+}
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': 'https://majorhub.com.br/#website',
+  name: 'MajorHub',
+  url: 'https://majorhub.com.br',
+  publisher: { '@id': 'https://majorhub.com.br/#organization' },
+  inLanguage: 'pt-BR',
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${sora.variable} ${inter.variable}`}>
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <SmoothScroll>
           {children}
         </SmoothScroll>
