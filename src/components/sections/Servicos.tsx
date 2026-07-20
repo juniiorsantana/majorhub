@@ -170,7 +170,7 @@ function ServicoCard({ servico, index, accent, onClick }: {
             animate={hovered ? { x: 4 } : { x: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           >
-            {(servico as any).cta ?? 'Ver mais →'}
+            {servico.cta ?? 'Ver mais →'}
           </motion.span>
         </div>
       </div>
@@ -339,7 +339,7 @@ function ServicoModal({ servico, accent, onClose }: {
                 boxShadow: `0 0 20px ${accent.glow}`,
               }}
             >
-              {(servico as any).cta ?? 'Ver como funciona →'}
+              {servico.cta ?? 'Ver como funciona →'}
             </motion.a>
           </div>
         </motion.div>

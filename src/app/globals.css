@@ -271,3 +271,22 @@ html { scroll-behavior: auto; } /* Lenis assume o scroll */
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 10px rgba(0, 0, 0, 0.2);
   font-weight: 700;
 }
+
+/* ─── Admin ─────────────────────────────────────────── */
+.admin-quick-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.admin-quick-action:hover {
+  background: rgba(0, 153, 255, 0.08);
+  border-color: rgba(0, 153, 255, 0.2);
+}
+

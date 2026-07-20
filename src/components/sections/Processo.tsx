@@ -83,7 +83,7 @@ export function Processo() {
         return dotRect.top - trackTop + dotRect.height / 2
       })
 
-      const totalTravel = dotPositions[total - 1] - dotPositions[0]
+
       // correção: trackHeight é a altura REAL do elemento trilho (offsetHeight).
       // scaleY vai de 0→1 sobre essa altura. Se normalizarmos por totalTravel
       // (distância entre dots em px), o scaleY fica errado porque o trilho

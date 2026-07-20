@@ -53,6 +53,17 @@ export function getAllPosts(): Post[] {
   return posts.sort((a, b) => (a.date < b.date ? 1 : -1))
 }
 
+// Inclui rascunhos — apenas para uso na área de Admin
+export function getAllPostsAdmin(): Post[] {
+  if (!fs.existsSync(BLOG_DIR)) return []
+
+  const files = fs.readdirSync(BLOG_DIR).filter(f => f.endsWith('.md'))
+  const posts = files.map(readPostFile)
+
+  return posts.sort((a, b) => (a.date < b.date ? 1 : -1))
+}
+
+
 export function getPostBySlug(slug: string): Post | null {
   const files = fs.readdirSync(BLOG_DIR).filter(f => f.endsWith('.md'))
 

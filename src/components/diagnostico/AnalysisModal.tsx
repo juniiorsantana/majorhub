@@ -15,15 +15,17 @@ export function AnalysisModal({ open, dominio }: Props) {
   const [stepIndex, setStepIndex] = useState(0)
 
   useEffect(() => {
-    if (!open) {
-      setStepIndex(0)
-      return
-    }
+    if (!open) return
+
+    const resetTimer = window.setTimeout(() => setStepIndex(0), 0)
     const interval = setInterval(() => {
       // Para no último step — a barra fica "quase lá" até a análise concluir
       setStepIndex(i => Math.min(i + 1, steps.length - 1))
     }, STEP_MS)
-    return () => clearInterval(interval)
+    return () => {
+      window.clearTimeout(resetTimer)
+      clearInterval(interval)
+    }
   }, [open, steps.length])
 
   const progress = Math.min(((stepIndex + 1) / steps.length) * 100, 92)

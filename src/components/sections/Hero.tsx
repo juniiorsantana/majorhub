@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 
 import { ContainerTextFlip } from '@/components/ui/container-text-flip'
 import { BrilhoButton } from '@/components/ui/BrilhoButton'
@@ -14,7 +14,7 @@ const container = {
   visible: { transition: { staggerChildren: 0.1 } },
 }
 
-const line: any = {
+const line: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] as const } },
 }

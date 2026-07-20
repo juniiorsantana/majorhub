@@ -135,11 +135,7 @@ function GrowthCopy() {
 export function GrowthEngine() {
   const sectionRef = useRef<HTMLDivElement>(null)
   const stickyRef = useRef<HTMLDivElement>(null)
-  const cardRefs = [
-    useRef<HTMLDivElement>(null),
-    useRef<HTMLDivElement>(null),
-    useRef<HTMLDivElement>(null),
-  ]
+  const cardRefs = useRef<Array<HTMLDivElement | null>>([])
 
   // A animação de scroll só roda no desktop; no mobile os cards são estáticos
   const [isDesktop, setIsDesktop] = useState(false)
@@ -156,7 +152,7 @@ export function GrowthEngine() {
 
     const section = sectionRef.current
     const sticky = stickyRef.current
-    const cards = cardRefs.map(r => r.current)
+    const cards = cardRefs.current
     if (!section || !sticky || cards.some(c => !c)) return
 
     const N = CARDS.length
@@ -307,7 +303,7 @@ export function GrowthEngine() {
 
           {/* Cards — position:absolute, animados pelo useEffect */}
           {CARDS.map((card, i) => (
-            <div key={card.index} ref={cardRefs[i]}>
+            <div key={card.index} ref={element => { cardRefs.current[i] = element }}>
               <CardVisual card={card} isLast={i === CARDS.length - 1} />
             </div>
           ))}
