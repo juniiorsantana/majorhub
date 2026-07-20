@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'crypto'
+import { getSupabaseAdminConfig } from '@/lib/supabase/admin'
 
 export const PORTAL_SESSION_COOKIE = 'mh_portal_session'
 export const PORTAL_SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
@@ -11,9 +12,7 @@ export interface PortalSession {
 }
 
 function signingKey() {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY nao configurada no servidor.')
-  return key
+  return getSupabaseAdminConfig().serviceRoleKey
 }
 
 function signature(payload: string) {
