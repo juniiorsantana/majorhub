@@ -47,6 +47,9 @@ export default function ClientWorkspace({ clientId }: { clientId: string }) {
   const [calendarModal, setCalendarModal] = useState(false)
   const [calendarSaving, setCalendarSaving] = useState(false)
   const [calendarForm, setCalendarForm] = useState({ name: '', starts_on: '', ends_on: '', status: 'draft' })
+  const [editingCalendar, setEditingCalendar] = useState<ContentCalendar | null>(null)
+  const [calendarName, setCalendarName] = useState('')
+  const [calendarRenaming, setCalendarRenaming] = useState(false)
   const [releasing, setReleasing] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
@@ -96,6 +99,48 @@ export default function ClientWorkspace({ clientId }: { clientId: string }) {
     finally { setReleasing(null) }
   }
 
+  function openRenameCalendar(calendar: ContentCalendar) {
+    setEditingCalendar(calendar)
+    setCalendarName(calendar.name)
+    setError('')
+  }
+
+  async function renameCalendar(event: FormEvent) {
+    event.preventDefault()
+    if (!editingCalendar || calendarName.trim().length < 2) return
+    setCalendarRenaming(true)
+    setError('')
+    try {
+      const response = await fetch(`/api/admin/content/calendars/${editingCalendar.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: calendarName.trim(),
+          starts_on: editingCalendar.starts_on,
+          ends_on: editingCalendar.ends_on,
+          status: editingCalendar.status,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Não foi possível renomear o cronograma.')
+      setClient(previous => previous ? {
+        ...previous,
+        content_calendars: (previous.content_calendars ?? []).map(calendar => calendar.id === editingCalendar.id ? { ...calendar, name: data.calendar.name } : calendar),
+      } : previous)
+      setPortal(previous => previous ? {
+        ...previous,
+        batches: previous.batches.map(batch => batch.calendar_id === editingCalendar.id ? { ...batch, title: data.calendar.name } : batch),
+      } : previous)
+      setNotice('Nome do cronograma atualizado no painel e no portal.')
+      setEditingCalendar(null)
+      setCalendarName('')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível renomear o cronograma.')
+    } finally {
+      setCalendarRenaming(false)
+    }
+  }
+
   async function createCalendar(event: FormEvent) {
     event.preventDefault()
     setCalendarSaving(true)
@@ -136,12 +181,16 @@ export default function ClientWorkspace({ clientId }: { clientId: string }) {
 
     <div className={styles.calendarStack}>{(client.content_calendars ?? []).map(calendar => {
       const batch = portal.batches.find(item => item.calendar_id === calendar.id && item.status === 'open')
-      return <section className={styles.calendar} key={calendar.id}><header className={styles.calendarHeader}><div><h2 className={styles.calendarTitle}>{calendar.name}</h2><div className={styles.calendarDates}>{formatDate(calendar.starts_on)} {calendar.ends_on ? `— ${formatDate(calendar.ends_on)}` : ''} · {CALENDAR_STATUS_LABELS[calendar.status]}{batch ? ' · Portal liberado' : ''}</div></div><div className={styles.calendarActions}>{batch ? <button className={styles.quietButton} type="button" onClick={copyPortal}>✓ Copiar portal</button> : <button className={styles.quietButton} disabled={releasing === calendar.id || !calendar.posts.length} type="button" onClick={() => releaseCalendar(calendar)}>{releasing === calendar.id ? 'Liberando…' : 'Liberar posts no portal'}</button>}<Link className={styles.primaryButton} href={`/admin/clientes/${clientId}/posts/novo?calendar=${calendar.id}`}>＋ Publicação</Link></div></header><PostRows posts={calendar.posts} clientId={clientId} /></section>
+      return <section className={styles.calendar} key={calendar.id}><header className={styles.calendarHeader}><div><h2 className={styles.calendarTitle}>{calendar.name}</h2><div className={styles.calendarDates}>{formatDate(calendar.starts_on)} {calendar.ends_on ? `— ${formatDate(calendar.ends_on)}` : ''} · {CALENDAR_STATUS_LABELS[calendar.status]}{batch ? ' · Portal liberado' : ''}</div></div><div className={styles.calendarActions}><button className={styles.quietButton} type="button" onClick={() => openRenameCalendar(calendar)}>Renomear</button>{batch ? <button className={styles.quietButton} type="button" onClick={copyPortal}>✓ Copiar portal</button> : <button className={styles.quietButton} disabled={releasing === calendar.id || !calendar.posts.length} type="button" onClick={() => releaseCalendar(calendar)}>{releasing === calendar.id ? 'Liberando…' : 'Liberar posts no portal'}</button>}<Link className={styles.primaryButton} href={`/admin/clientes/${clientId}/posts/novo?calendar=${calendar.id}`}>＋ Publicação</Link></div></header><PostRows posts={calendar.posts} clientId={clientId} /></section>
     })}
       {Boolean(client.posts?.length) && <section className={styles.calendar}><header className={styles.calendarHeader}><div><h2 className={styles.calendarTitle}>Publicações avulsas</h2><div className={styles.calendarDates}>Conteúdos ainda sem cronograma</div></div><Link className={styles.primaryButton} href={`/admin/clientes/${clientId}/posts/novo`}>＋ Publicação</Link></header><PostRows posts={client.posts ?? []} clientId={clientId} /></section>}
       {!(client.content_calendars?.length) && !(client.posts?.length) && <div className={styles.emptyState}><strong>Esta pasta ainda está vazia</strong><span>Crie um cronograma para organizar a primeira sequência de posts.</span><button className={styles.primaryButton} type="button" onClick={() => setCalendarModal(true)}>Criar cronograma</button></div>}
     </div>
 
+    {editingCalendar && <div className={styles.modalBackdrop} role="presentation" onMouseDown={event => event.target === event.currentTarget && setEditingCalendar(null)}><form className={styles.modal} onSubmit={renameCalendar}><h2 className={styles.modalTitle}>Renomear cronograma</h2><div className={styles.field}><label htmlFor="rename-calendar">Nome do cronograma</label><input id="rename-calendar" autoFocus required minLength={2} maxLength={120} value={calendarName} onChange={event => setCalendarName(event.target.value)} placeholder="Ex.: Conteúdo de agosto" /></div><div className={styles.formActions}><button className={styles.quietButton} type="button" onClick={() => setEditingCalendar(null)}>Cancelar</button><button className={styles.primaryButton} disabled={calendarRenaming || calendarName.trim().length < 2} type="submit">{calendarRenaming ? 'Salvando…' : 'Salvar nome'}</button></div></form></div>}
+
     {calendarModal && <div className={styles.modalBackdrop} role="presentation" onMouseDown={event => event.target === event.currentTarget && setCalendarModal(false)}><form className={styles.modal} onSubmit={createCalendar}><h2 className={styles.modalTitle}>Novo cronograma</h2><div className={styles.formGrid}><div className={`${styles.field} ${styles.fieldFull}`}><label htmlFor="calendar-name">Nome</label><input id="calendar-name" required value={calendarForm.name} onChange={event => setCalendarForm(previous => ({ ...previous, name: event.target.value }))} placeholder="Ex.: Conteúdo de agosto" /></div><div className={styles.field}><label htmlFor="calendar-start">Início</label><input id="calendar-start" type="date" value={calendarForm.starts_on} onChange={event => setCalendarForm(previous => ({ ...previous, starts_on: event.target.value }))} /></div><div className={styles.field}><label htmlFor="calendar-end">Fim</label><input id="calendar-end" type="date" value={calendarForm.ends_on} onChange={event => setCalendarForm(previous => ({ ...previous, ends_on: event.target.value }))} /></div><div className={`${styles.field} ${styles.fieldFull}`}><label htmlFor="calendar-status">Etapa</label><select id="calendar-status" value={calendarForm.status} onChange={event => setCalendarForm(previous => ({ ...previous, status: event.target.value }))}><option value="draft">Em montagem</option><option value="active">Em aprovação</option></select></div></div><div className={styles.formActions}><button className={styles.quietButton} type="button" onClick={() => setCalendarModal(false)}>Cancelar</button><button className={styles.primaryButton} disabled={calendarSaving} type="submit">{calendarSaving ? 'Criando…' : 'Criar cronograma'}</button></div></form></div>}
   </div>
 }
+
+

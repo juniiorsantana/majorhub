@@ -284,8 +284,36 @@ export default function ClientPortal({ slug }: { slug: string }) {
       <div className={hubStyles.progressTrack}><div className={hubStyles.progressFill} style={{ width: `${batch.posts.length ? reviewedCount / batch.posts.length * 100 : 0}%` }} /></div>
     </div>
 
-    <div className={hubStyles.approvalLayout}>
-      <aside className={hubStyles.sequencePanel}>
+
+    <section className={styles.mobileDecisionBar} aria-label="Aprovação da publicação atual">
+      <div className={styles.mobilePostNav}>
+        <button aria-label="Publicação anterior" disabled={currentIndex === 0} type="button" onClick={() => selectPost(currentIndex - 1)}>‹</button>
+        <div className={styles.mobilePostIdentity}>
+          <span>Publicação {String(currentIndex + 1).padStart(2, '0')} de {String(batch.posts.length).padStart(2, '0')}</span>
+          <strong>{current.title}</strong>
+          <small>{formatDate(current.scheduled_at)}</small>
+        </div>
+        <button aria-label="Próxima publicação" disabled={currentIndex === batch.posts.length - 1} type="button" onClick={() => selectPost(currentIndex + 1)}>›</button>
+      </div>
+
+      {notice && <div className={styles.mobileNotice}>{notice}</div>}
+      {error && <div className={styles.mobileError}>{error}</div>}
+
+      {!batchOpen ? <div className={styles.mobileResolved}>Envio encerrado · disponível para consulta</div> : current.status === 'approved' || current.status === 'published' ? <div className={[styles.mobileResolved, styles.mobileApproved].join(' ')}>✓ Publicação aprovada</div> : current.status === 'changes_requested' || current.status === 'in_progress' ? <div className={[styles.mobileResolved, styles.mobileChanges].join(' ')}>Correção solicitada à equipe</div> : <>
+        <div className={styles.mobileDecisionActions}>
+          <button className={styles.mobileApprove} disabled={submitting} type="button" onClick={() => submitDecision('approved')}>✓ Aprovar</button>
+          <button className={styles.mobileCorrect} disabled={submitting} type="button" onClick={() => setCorrectionOpen(previous => !previous)}>Corrigir</button>
+        </div>
+        {correctionOpen && <div className={styles.mobileCorrection}>
+          <label htmlFor="mobile-correction">O que precisa mudar?</label>
+          <textarea id="mobile-correction" autoFocus value={comment} onChange={event => setComment(event.target.value)} placeholder="Indique a imagem, legenda ou informação que precisa de ajuste." />
+          <div><button type="button" onClick={() => setCorrectionOpen(false)}>Cancelar</button><button disabled={submitting || !comment.trim()} type="button" onClick={() => submitDecision('changes_requested')}>{submitting ? 'Enviando…' : 'Enviar correção'}</button></div>
+        </div>}
+      </>}
+    </section>
+
+    <div className={`${hubStyles.approvalLayout} ${styles.mobilePreviewLayout}`}>
+      <aside className={`${hubStyles.sequencePanel} ${styles.desktopSequence}`}>
         <div className={hubStyles.sequenceTitle}>{batch.title}</div>
         <div className={hubStyles.sequenceList}>{batch.posts.map((post, index) => <button className={`${hubStyles.sequenceItem} ${index === currentIndex ? hubStyles.sequenceItemActive : ''}`} key={post.id} type="button" onClick={() => selectPost(index)}><span className={hubStyles.sequenceNumber}>{String(index + 1).padStart(2, '0')}</span><span className={hubStyles.sequenceInfo}><strong>{post.title}</strong><span>{formatDate(post.scheduled_at)}</span></span><span className={`${hubStyles.statusDot} ${dotClass(post.status)}`} /></button>)}</div>
       </aside>
@@ -295,7 +323,7 @@ export default function ClientPortal({ slug }: { slug: string }) {
         <PostPreview post={current} client={feed.client} />
       </section>
 
-      <aside className={hubStyles.reviewPanel}>
+      <aside className={`${hubStyles.reviewPanel} ${styles.desktopReview}`}>
         <div className={hubStyles.reviewIndex}>{String(currentIndex + 1).padStart(2, '0')} <span>/ {String(batch.posts.length).padStart(2, '0')}</span></div>
         <h1 className={hubStyles.reviewTitle}>{current.title}</h1>
         <div className={hubStyles.reviewDate}>{formatDate(current.scheduled_at)} · versão {current.current_version}</div>
@@ -315,3 +343,5 @@ export default function ClientPortal({ slug }: { slug: string }) {
     </div>
   </main>
 }
+
+

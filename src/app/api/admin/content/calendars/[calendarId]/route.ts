@@ -19,6 +19,12 @@ export async function PUT(request: NextRequest, { params }: Context) {
 
   if (error) return NextResponse.json({ error: 'Nao foi possivel salvar o cronograma.' }, { status: 500 })
   if (!data) return NextResponse.json({ error: 'Cronograma nao encontrado.' }, { status: 404 })
+
+  const { error: batchError } = await supabase.from('approval_batches')
+    .update({ title: data.name, updated_at: new Date().toISOString() })
+    .eq('calendar_id', calendarId)
+  if (batchError) console.error('[calendar/update-batch-title]', batchError)
+
   return NextResponse.json({ calendar: data })
 }
 
@@ -31,3 +37,5 @@ export async function DELETE(_request: NextRequest, { params }: Context) {
   if (error) return NextResponse.json({ error: 'Nao foi possivel arquivar o cronograma.' }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
+
+

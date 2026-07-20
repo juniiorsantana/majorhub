@@ -253,3 +253,113 @@
 @media (prefers-reduced-motion: reduce) {
   .accessPage *, .batchNav * { scroll-behavior: auto !important; transition: none !important; }
 }
+
+
+
+/* Mobile proof ribbon: one compact decision surface replaces the two large side panels. */
+.mobileDecisionBar { display: none; }
+.desktopSequence,
+.desktopReview { min-width: 0; }
+
+@media (max-width: 760px) {
+  .mobileDecisionBar {
+    backdrop-filter: blur(16px);
+    background: rgba(247, 249, 252, .96);
+    border-bottom: 1px solid #d9e1eb;
+    box-shadow: 0 9px 24px rgba(8, 29, 50, .09);
+    display: block;
+    padding: 10px 14px 11px;
+    position: sticky;
+    top: 0;
+    z-index: 35;
+  }
+
+  .mobilePostNav {
+    align-items: center;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 34px minmax(0, 1fr) 34px;
+  }
+
+  .mobilePostNav > button {
+    align-items: center;
+    background: white;
+    border: 1px solid #dbe3ec;
+    border-radius: 10px;
+    color: #18324e;
+    cursor: pointer;
+    display: flex;
+    font: 500 22px/1 var(--font-inter), sans-serif;
+    height: 34px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .mobilePostNav > button:disabled { color: #c1c9d2; cursor: default; }
+  .mobilePostIdentity { min-width: 0; }
+  .mobilePostIdentity span { color: #2878ff; display: block; font: 800 8px var(--font-inter), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .mobilePostIdentity strong { color: #10243b; display: block; font: 750 13px var(--font-sora), sans-serif; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobilePostIdentity small { color: #8794a4; display: block; font: 500 9px var(--font-inter), sans-serif; margin-top: 2px; }
+
+  .mobileDecisionActions {
+    display: grid;
+    gap: 7px;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 9px;
+  }
+
+  .mobileDecisionActions button {
+    border-radius: 9px;
+    cursor: pointer;
+    font: 750 11px var(--font-inter), sans-serif;
+    min-height: 34px;
+    padding: 0 12px;
+  }
+
+  .mobileApprove { background: #15875d; border: 1px solid #15875d; color: white; }
+  .mobileCorrect { background: white; border: 1px solid #edc7c2; color: #b34e43; }
+  .mobileDecisionActions button:disabled { cursor: wait; opacity: .55; }
+
+  .mobileResolved,
+  .mobileNotice,
+  .mobileError {
+    border-radius: 9px;
+    font: 650 10px/1.45 var(--font-inter), sans-serif;
+    margin-top: 9px;
+    padding: 9px 11px;
+    text-align: center;
+  }
+
+  .mobileResolved { background: #edf1f5; color: #53667a; }
+  .mobileApproved,
+  .mobileNotice { background: #eaf8f2; color: #187451; }
+  .mobileChanges,
+  .mobileError { background: #fff1ef; color: #a94e44; }
+
+  .mobileCorrection {
+    background: white;
+    border: 1px solid #e0e6ed;
+    border-radius: 11px;
+    box-shadow: 0 10px 25px rgba(14, 37, 61, .08);
+    margin-top: 9px;
+    padding: 10px;
+  }
+
+  .mobileCorrection label { color: #6c7d90; display: block; font: 800 8px var(--font-inter), sans-serif; letter-spacing: .08em; margin-bottom: 6px; text-transform: uppercase; }
+  .mobileCorrection textarea { background: #f7f9fb; border: 1px solid #dce3eb; border-radius: 8px; color: #10243b; font: 500 11px/1.5 var(--font-inter), sans-serif; min-height: 74px; padding: 9px; resize: vertical; width: 100%; }
+  .mobileCorrection > div { display: flex; gap: 7px; justify-content: flex-end; margin-top: 7px; }
+  .mobileCorrection button { background: white; border: 1px solid #dce3eb; border-radius: 8px; color: #52657a; font: 700 10px var(--font-inter), sans-serif; min-height: 32px; padding: 0 11px; }
+  .mobileCorrection button:last-child { background: #b95449; border-color: #b95449; color: white; }
+
+  .desktopSequence,
+  .desktopReview { display: none !important; }
+
+  .mobilePreviewLayout {
+    display: block !important;
+    margin: 0 auto !important;
+    max-width: 520px !important;
+    padding: 14px 10px 36px !important;
+    width: 100% !important;
+  }
+}
+

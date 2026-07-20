@@ -45,6 +45,10 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#001a2e',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 // Dados estruturados: quem é a empresa (SEO + AEO)
@@ -144,3 +148,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 }
+
+
