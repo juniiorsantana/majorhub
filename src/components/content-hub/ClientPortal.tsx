@@ -84,6 +84,7 @@ export default function ClientPortal({ slug }: { slug: string }) {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [decisionSubmitting, setDecisionSubmitting] = useState<ReviewDecision | null>(null)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [batchIndex, setBatchIndex] = useState(0)
@@ -177,8 +178,8 @@ export default function ClientPortal({ slug }: { slug: string }) {
   }
 
   async function submitDecision(decision: ReviewDecision) {
-    if (!batch || !current || (decision === 'changes_requested' && !comment.trim())) return
-    setSubmitting(true)
+    if (!batch || !current || decisionSubmitting || (decision === 'changes_requested' && !comment.trim())) return
+    setDecisionSubmitting(decision)
     setError('')
     setNotice('')
     try {
@@ -213,11 +214,15 @@ export default function ClientPortal({ slug }: { slug: string }) {
       } : previous)
       setCorrectionOpen(false)
       setComment('')
-      setNotice(decision === 'approved' ? 'Publicação aprovada com sucesso.' : 'Pedido de correção enviado à Major Hub.')
+      const hasNextPost = currentIndex < batch.posts.length - 1
+      setNotice(decision === 'approved'
+        ? (hasNextPost ? 'Aprovado — abrindo o próximo conteúdo…' : 'Publicação aprovada. Todos os conteúdos foram revisados.')
+        : (hasNextPost ? 'Correção enviada — abrindo o próximo conteúdo…' : 'Correção enviada. Todos os conteúdos foram revisados.'))
+      if (hasNextPost) window.setTimeout(nextPost, 850)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível registrar sua resposta.')
     } finally {
-      setSubmitting(false)
+      setDecisionSubmitting(null)
     }
   }
 
@@ -299,15 +304,15 @@ export default function ClientPortal({ slug }: { slug: string }) {
       {notice && <div className={styles.mobileNotice}>{notice}</div>}
       {error && <div className={styles.mobileError}>{error}</div>}
 
-      {!batchOpen ? <div className={styles.mobileResolved}>Envio encerrado · disponível para consulta</div> : current.status === 'approved' || current.status === 'published' ? <div className={[styles.mobileResolved, styles.mobileApproved].join(' ')}>✓ Publicação aprovada</div> : current.status === 'changes_requested' || current.status === 'in_progress' ? <div className={[styles.mobileResolved, styles.mobileChanges].join(' ')}>Correção solicitada à equipe</div> : <>
+      {decisionSubmitting ? <div className={[styles.mobileResolved, styles.mobileSaving].join(' ')} role="status" aria-live="polite">{decisionSubmitting === 'approved' ? 'Aprovando publicação…' : 'Enviando correção…'}</div> : !batchOpen ? <div className={styles.mobileResolved}>Envio encerrado · disponível para consulta</div> : current.status === 'approved' || current.status === 'published' ? <div className={[styles.mobileResolved, styles.mobileApproved].join(' ')}>✓ Publicação aprovada</div> : current.status === 'changes_requested' || current.status === 'in_progress' ? <div className={[styles.mobileResolved, styles.mobileChanges].join(' ')}>Correção solicitada à equipe</div> : <>
         <div className={styles.mobileDecisionActions}>
-          <button className={styles.mobileApprove} disabled={submitting} type="button" onClick={() => submitDecision('approved')}>✓ Aprovar</button>
-          <button className={styles.mobileCorrect} disabled={submitting} type="button" onClick={() => setCorrectionOpen(previous => !previous)}>Corrigir</button>
+          <button className={styles.mobileApprove} disabled={decisionSubmitting !== null} type="button" onClick={() => submitDecision('approved')}>{decisionSubmitting === 'approved' ? 'Aprovando…' : '✓ Aprovar'}</button>
+          <button className={styles.mobileCorrect} disabled={decisionSubmitting !== null} type="button" onClick={() => setCorrectionOpen(previous => !previous)}>Corrigir</button>
         </div>
         {correctionOpen && <div className={styles.mobileCorrection}>
           <label htmlFor="mobile-correction">O que precisa mudar?</label>
           <textarea id="mobile-correction" autoFocus value={comment} onChange={event => setComment(event.target.value)} placeholder="Indique a imagem, legenda ou informação que precisa de ajuste." />
-          <div><button type="button" onClick={() => setCorrectionOpen(false)}>Cancelar</button><button disabled={submitting || !comment.trim()} type="button" onClick={() => submitDecision('changes_requested')}>{submitting ? 'Enviando…' : 'Enviar correção'}</button></div>
+          <div><button type="button" onClick={() => setCorrectionOpen(false)}>Cancelar</button><button disabled={decisionSubmitting !== null || !comment.trim()} type="button" onClick={() => submitDecision('changes_requested')}>{decisionSubmitting === 'changes_requested' ? 'Enviando…' : 'Enviar correção'}</button></div>
         </div>}
       </>}
     </section>
@@ -320,7 +325,7 @@ export default function ClientPortal({ slug }: { slug: string }) {
 
       <section className={hubStyles.previewColumn}>
         <div className={hubStyles.proofLabel}><strong>Publicação {String(currentIndex + 1).padStart(2, '0')}</strong><span>Arraste para ver o carrossel</span></div>
-        <PostPreview post={current} client={feed.client} />
+        <PostPreview key={current.id} post={current} client={feed.client} />
       </section>
 
       <aside className={`${hubStyles.reviewPanel} ${styles.desktopReview}`}>
@@ -332,10 +337,10 @@ export default function ClientPortal({ slug }: { slug: string }) {
         {notice && <div className={hubStyles.successBox}>{notice}</div>}
         {error && <div className={hubStyles.errorBox}>{error}</div>}
 
-        {!batchOpen ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedApproved}`}><strong>Envio encerrado</strong><br />Este cronograma está disponível apenas para consulta.</div> : current.status === 'approved' || current.status === 'published' ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedApproved}`}><strong>✓ Publicação aprovada</strong><br />Sua aprovação já foi registrada.</div> : current.status === 'changes_requested' || current.status === 'in_progress' ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedChanges}`}><strong>Correção solicitada</strong><br />A equipe da Major Hub recebeu seu pedido.{current.latest_review?.comment && <span className={hubStyles.feedbackQuote}>{current.latest_review.comment}</span>}</div> : <>
+        {decisionSubmitting ? <div className={`${hubStyles.resolvedBox} ${styles.decisionSaving}`} role="status" aria-live="polite"><strong>{decisionSubmitting === 'approved' ? 'Aprovando publicação…' : 'Enviando correção…'}</strong><br />Registrando sua decisão com segurança.</div> : !batchOpen ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedApproved}`}><strong>Envio encerrado</strong><br />Este cronograma está disponível apenas para consulta.</div> : current.status === 'approved' || current.status === 'published' ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedApproved}`}><strong>✓ Publicação aprovada</strong><br />Sua aprovação já foi registrada.</div> : current.status === 'changes_requested' || current.status === 'in_progress' ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedChanges}`}><strong>Correção solicitada</strong><br />A equipe da Major Hub recebeu seu pedido.{current.latest_review?.comment && <span className={hubStyles.feedbackQuote}>{current.latest_review.comment}</span>}</div> : <>
           <p className={hubStyles.reviewPrompt}>Confira a arte, navegue pelo carrossel e leia a legenda. Depois, registre sua decisão.</p>
-          <div className={hubStyles.reviewActions}><button className={hubStyles.approveButton} disabled={submitting} type="button" onClick={() => submitDecision('approved')}>✓ Aprovar publicação</button><button className={hubStyles.correctionButton} disabled={submitting} type="button" onClick={() => setCorrectionOpen(true)}>Pedir uma correção</button></div>
-          {correctionOpen && <div className={hubStyles.correctionBox}><label htmlFor="correction">O que precisa ser corrigido?</label><textarea id="correction" autoFocus value={comment} onChange={event => setComment(event.target.value)} placeholder="Indique a imagem, o trecho da legenda ou a informação que deve mudar." /><div className={hubStyles.correctionActions}><button className={hubStyles.quietButton} type="button" onClick={() => setCorrectionOpen(false)}>Cancelar</button><button className={hubStyles.correctionButton} disabled={submitting || !comment.trim()} type="button" onClick={() => submitDecision('changes_requested')}>{submitting ? 'Enviando…' : 'Enviar correção'}</button></div></div>}
+          <div className={hubStyles.reviewActions}><button className={hubStyles.approveButton} disabled={decisionSubmitting !== null} type="button" onClick={() => submitDecision('approved')}>{decisionSubmitting === 'approved' ? 'Aprovando…' : '✓ Aprovar publicação'}</button><button className={hubStyles.correctionButton} disabled={decisionSubmitting !== null} type="button" onClick={() => setCorrectionOpen(true)}>Pedir uma correção</button></div>
+          {correctionOpen && <div className={hubStyles.correctionBox}><label htmlFor="correction">O que precisa ser corrigido?</label><textarea id="correction" autoFocus value={comment} onChange={event => setComment(event.target.value)} placeholder="Indique a imagem, o trecho da legenda ou a informação que deve mudar." /><div className={hubStyles.correctionActions}><button className={hubStyles.quietButton} type="button" onClick={() => setCorrectionOpen(false)}>Cancelar</button><button className={hubStyles.correctionButton} disabled={decisionSubmitting !== null || !comment.trim()} type="button" onClick={() => submitDecision('changes_requested')}>{decisionSubmitting === 'changes_requested' ? 'Enviando…' : 'Enviar correção'}</button></div></div>}
         </>}
 
         {currentIndex < batch.posts.length - 1 && <button className={hubStyles.nextButton} type="button" onClick={nextPost}>Próxima publicação →</button>}
@@ -343,5 +348,9 @@ export default function ClientPortal({ slug }: { slug: string }) {
     </div>
   </main>
 }
+
+
+
+
 
 

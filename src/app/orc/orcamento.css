@@ -1,0 +1,113 @@
+/**
+ * Estilos exclusivos das propostas comerciais (/orc/*).
+ * Carregado só pelo layout src/app/orc/layout.tsx — não afeta o resto do site.
+ *
+ * Cada preset declara os tokens --orc-* consumidos pelos componentes de orçamento.
+ * Para um cliente com visual próprio: duplique um bloco, troque as cores e adicione
+ * o preset em src/content/orcamentos/temas.ts.
+ */
+
+/* ─── Preset: editorial claro (papel creme + dourado) ─── */
+.orc-tema-editorial-claro {
+  --orc-bg: #f7f5f2;
+  --orc-surface: #ffffff;
+  --orc-contrast-bg: #14181a;
+  --orc-contrast-text: #f2efea;
+  --orc-contrast-soft: rgba(242, 239, 234, 0.62);
+  --orc-text: #1a1a1a;
+  --orc-text-soft: #5c5c5c;
+  --orc-accent: #b99a6b;
+  --orc-accent-soft: rgba(185, 154, 107, 0.22);
+  --orc-line: rgba(26, 26, 26, 0.14);
+  --orc-font-display: var(--font-orc-display), Georgia, 'Times New Roman', serif;
+  --orc-font-body: var(--font-inter), system-ui, sans-serif;
+}
+
+/* ─── Preset: MajorHub escuro (visual original do site) ─── */
+.orc-tema-majorhub-escuro {
+  --orc-bg: #0a2540;
+  --orc-surface: rgba(10, 37, 64, 0.6);
+  --orc-contrast-bg: #001a2e;
+  --orc-contrast-text: #e0e7ff;
+  --orc-contrast-soft: rgba(186, 230, 253, 0.72);
+  --orc-text: #e0e7ff;
+  --orc-text-soft: #bae6fd;
+  --orc-accent: #00e5ff;
+  --orc-accent-soft: rgba(0, 229, 255, 0.22);
+  --orc-line: rgba(0, 229, 255, 0.2);
+  --orc-font-display: var(--font-sora), system-ui, sans-serif;
+  --orc-font-body: var(--font-inter), system-ui, sans-serif;
+}
+
+/**
+ * O layout raiz pinta o body com o gradiente escuro do site.
+ * Estas regras neutralizam esse fundo apenas enquanto uma proposta está montada,
+ * para que a área de overscroll acompanhe o tema.
+ *
+ * Precisam de valor literal: uma regra no body não enxerga variáveis declaradas
+ * no filho. Por isso trocar a cor de fundo exige um preset novo, não um override inline.
+ */
+body:has(.orc-tema-editorial-claro) {
+  background: #f7f5f2;
+}
+
+body:has(.orc-tema-majorhub-escuro) {
+  background: linear-gradient(180deg, #0a2540 0%, #001a2e 100%);
+}
+
+/* ─── Raiz da proposta ─── */
+.orc-root {
+  min-height: 100dvh;
+  background: var(--orc-bg);
+  color: var(--orc-text);
+  font-family: var(--orc-font-body);
+}
+
+.orc-root ::selection {
+  background: var(--orc-accent-soft);
+  color: var(--orc-text);
+}
+
+.orc-root :focus-visible {
+  outline: 2px solid var(--orc-accent);
+  outline-offset: 3px;
+}
+
+/* Âncoras: aqui não existe navbar fixa, então o recuo do site global atrapalha. */
+.orc-root section[id] {
+  scroll-margin-top: 24px;
+}
+
+/* ─── Utilitários editoriais ─── */
+
+/* Rótulo em caixa alta espaçada — "PROPOSTA COMERCIAL", "INVESTIMENTO", "PROCESSO" */
+.orc-label {
+  font-family: var(--orc-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* Título serifado */
+.orc-display {
+  font-family: var(--orc-font-display);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+
+/* Filete curto usado abaixo dos títulos */
+.orc-rule {
+  display: block;
+  width: 56px;
+  height: 1px;
+  background: var(--orc-accent);
+}
+
+/* Corte diagonal do hero — só no desktop, onde há espaço para a imagem ao lado */
+@media (min-width: 1024px) {
+  .orc-hero-cut {
+    clip-path: polygon(14% 0, 100% 0, 100% 100%, 0 100%);
+  }
+}

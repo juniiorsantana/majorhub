@@ -4,7 +4,7 @@ import { CSSProperties, useRef, useState } from 'react'
 import styles from './ContentHub.module.css'
 
 interface PreviewMedia { id?: string; url?: string; mime_type?: string; crop_x?: number; crop_y?: number; zoom?: number }
-interface PreviewPost { caption?: string; hashtags?: string; scheduled_at?: string | null; aspect_ratio?: '1:1' | '4:5'; media_assets?: PreviewMedia[]; media?: PreviewMedia[] }
+interface PreviewPost { id?: string; caption?: string; hashtags?: string; scheduled_at?: string | null; aspect_ratio?: '1:1' | '4:5'; media_assets?: PreviewMedia[]; media?: PreviewMedia[] }
 interface PreviewClient { name: string; instagram?: string | null; avatar_url?: string | null }
 
 function initials(name: string) { return name.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase() }
@@ -14,6 +14,7 @@ export default function PostPreview({ post, client }: { post: PreviewPost; clien
   const media = post.media_assets ?? post.media ?? []
   const [slide, setSlide] = useState(0)
   const carouselRef = useRef<HTMLDivElement>(null)
+
   const activeSlide = Math.min(slide, Math.max(0, media.length - 1))
   const aspectRatio = post.aspect_ratio === '4:5' ? '4 / 5' : '1 / 1'
 
@@ -68,3 +69,7 @@ export default function PostPreview({ post, client }: { post: PreviewPost; clien
     </article>
   )
 }
+
+
+
+
