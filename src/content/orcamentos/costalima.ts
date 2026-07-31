@@ -33,8 +33,8 @@ export const costalima: Orcamento = {
   hero: {
     // TODO: caminho de uma imagem em /public, ex.: '/Costa Lima Id Visual.avif'.
     // Vazio = painel tipográfico com o monograma.
-    imagem: '',
-    imagemAlt: '',
+    imagem: '/costalimamockup.avif',
+    imagemAlt: 'Mockup da identidade visual da Costa Lima Advocacia',
   },
 
   alinhamentos: [

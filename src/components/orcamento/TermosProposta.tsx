@@ -27,8 +27,8 @@ export function TermosProposta({ orcamento, validade }: Props) {
 
         <RevealWrapper delay={0.08}>
           <p className="orc-display mt-8 max-w-2xl text-[clamp(26px,3.4vw,38px)] text-[var(--orc-text)]">
-            Tudo por escrito,{' '}
-            <span className="italic text-[var(--orc-accent)]">sem letra miúda.</span>
+            Tenha a Major{' '}
+            <span className="italic text-[var(--orc-accent)]"> no seu time.</span>
           </p>
         </RevealWrapper>
 
