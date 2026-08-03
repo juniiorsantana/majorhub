@@ -16,7 +16,7 @@ function attemptKey(request: NextRequest, slug: string) {
 function portalConfigurationError(cause: unknown) {
   if (cause instanceof SupabaseAdminConfigError) {
     if (cause.code === 'missing_service_role_key') {
-      return 'A variável SUPABASE_SERVICE_ROLE_KEY não está disponível neste deployment da Vercel.'
+      return 'A variável SUPABASE_SECRET_KEY não está disponível neste deployment da Vercel.'
     }
     if (cause.code === 'missing_url') {
       return 'A variável NEXT_PUBLIC_SUPABASE_URL não está disponível neste deployment da Vercel.'
@@ -29,7 +29,7 @@ function portalConfigurationError(cause: unknown) {
     return 'As tabelas do portal ainda não existem no projeto Supabase usado pela produção.'
   }
   if (error?.code === 'PGRST301' || /invalid.+(jwt|key)|jwt.+invalid/i.test(error?.message ?? '')) {
-    return 'A SUPABASE_SERVICE_ROLE_KEY configurada na Vercel foi rejeitada pelo Supabase.'
+    return 'A chave secreta de servidor configurada na Vercel foi rejeitada pelo Supabase.'
   }
   return 'Não foi possível conectar o portal ao Supabase. Confira as variáveis deste deployment.'
 }

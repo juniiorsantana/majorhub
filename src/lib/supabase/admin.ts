@@ -24,7 +24,7 @@ function normalizeEnvironmentValue(value?: string) {
 export function getSupabaseAdminConfig() {
   const url = normalizeEnvironmentValue(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL)
   const serviceRoleKey = normalizeEnvironmentValue(
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_KEY,
+    process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY,
   )
 
   if (!url) throw new SupabaseAdminConfigError('missing_url')
