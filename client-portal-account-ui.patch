@@ -1,0 +1,211 @@
+diff --git a/src/components/content-hub/ClientPortal.tsx b/src/components/content-hub/ClientPortal.tsx
+--- a/src/components/content-hub/ClientPortal.tsx
++++ b/src/components/content-hub/ClientPortal.tsx
+@@ -51,10 +51,15 @@ interface PortalFeed {
+   client: {
+     id: string
+     name: string
+     contact_name: string | null
+     instagram: string | null
+     avatar_url: string | null
+   }
++  membership: {
++    name: string
++    email: string
++    role: 'client_admin' | 'approver' | 'viewer'
++  }
+   batches: PortalBatch[]
+ }
+@@ -84,2 +89,6 @@ export default function ClientPortal({ slug }: { slug: string }) {
+   const [email, setEmail] = useState('')
++  const [password, setPassword] = useState('')
++  const [newPassword, setNewPassword] = useState('')
++  const [confirmPassword, setConfirmPassword] = useState('')
++  const [mustChangePassword, setMustChangePassword] = useState(false)
+   const [loading, setLoading] = useState(true)
+@@ -99,7 +108,13 @@ export default function ClientPortal({ slug }: { slug: string }) {
+-      const response = await fetch(`/api/portal/${encodeURIComponent(slug)}`, { cache: 'no-store' })
++      const response = await fetch(`/api/portal/${encodeURIComponent(slug)}/account/feed`, { cache: 'no-store' })
+       const data = await response.json()
+-      if (response.status === 401) {
++      if (response.status === 401 || response.status === 403) {
+         setAuthenticated(false)
+         setFeed(null)
+         return
+       }
++      if (response.status === 428) {
++        setAuthenticated(true)
++        setMustChangePassword(true)
++        setFeed(null)
++        return
++      }
+       if (!response.ok) throw new Error(data.error || 'Não foi possível abrir o portal agora.')
+@@ -107,2 +122,3 @@ export default function ClientPortal({ slug }: { slug: string }) {
+       setFeed(data)
+       setAuthenticated(true)
++      setMustChangePassword(false)
+@@ -132,8 +148,10 @@ export default function ClientPortal({ slug }: { slug: string }) {
+-      const response = await fetch(`/api/portal/${encodeURIComponent(slug)}/login`, {
++      const response = await fetch(`/api/portal/${encodeURIComponent(slug)}/account/login`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+-        body: JSON.stringify({ email }),
++        body: JSON.stringify({ email, password }),
+       })
+       const data = await response.json()
+       if (!response.ok) throw new Error(data.error || 'Não foi possível liberar o acesso.')
+-      await loadPortal()
++      setAuthenticated(true)
++      setMustChangePassword(Boolean(data.must_change_password))
++      if (!data.must_change_password) await loadPortal()
+@@ -147,8 +165,10 @@ export default function ClientPortal({ slug }: { slug: string }) {
+   async function logout() {
+-    await fetch(`/api/portal/${encodeURIComponent(slug)}/logout`, { method: 'POST' })
++    await fetch(`/api/portal/${encodeURIComponent(slug)}/account/logout`, { method: 'POST' })
+     setFeed(null)
+     setEmail('')
++    setPassword('')
+     setAuthenticated(false)
++    setMustChangePassword(false)
+     setNotice('')
+     setError('')
+   }
+@@ -152,6 +172,33 @@ export default function ClientPortal({ slug }: { slug: string }) {
+     setNotice('')
+     setError('')
+   }
+ 
++  async function changePassword(event: FormEvent) {
++    event.preventDefault()
++    if (newPassword !== confirmPassword) {
++      setError('As senhas não coincidem.')
++      return
++    }
++    setSubmitting(true)
++    setError('')
++    try {
++      const response = await fetch(`/api/portal/${encodeURIComponent(slug)}/account/password`, {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify({ password: newPassword }),
++      })
++      const data = await response.json()
++      if (!response.ok) throw new Error(data.error || 'Não foi possível alterar a senha.')
++      setNewPassword('')
++      setConfirmPassword('')
++      setMustChangePassword(false)
++      await loadPortal()
++      setNotice('Senha atualizada. Seu acesso individual está protegido.')
++    } catch (cause) {
++      setError(cause instanceof Error ? cause.message : 'Não foi possível alterar a senha.')
++    } finally {
++      setSubmitting(false)
++    }
++  }
++
+   function selectBatch(index: number) {
+     setBatchIndex(index)
+@@ -186,7 +233,7 @@ export default function ClientPortal({ slug }: { slug: string }) {
+-      const response = await fetch(`/api/portal/${encodeURIComponent(slug)}`, {
++      const response = await fetch(`/api/portal/${encodeURIComponent(slug)}/account/feed`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+@@ -195,1 +242,1 @@ export default function ClientPortal({ slug }: { slug: string }) {
+-        throw new Error('Sua sessão expirou. Informe seu e-mail novamente.')
++        throw new Error('Sua sessão expirou. Entre novamente com e-mail e senha.')
+@@ -249,8 +296,10 @@ export default function ClientPortal({ slug }: { slug: string }) {
+             <div className={styles.formNumber}>01</div>
+             <h2>Acessar aprovação</h2>
+-            <p>Digite o e-mail cadastrado pela Major Hub. Não enviaremos código ou senha.</p>
++            <p>Entre com o e-mail e a senha cadastrados pela Major Hub. Cada decisão ficará registrada em seu nome.</p>
+             {error && <div className={styles.formError} role="alert">{error}</div>}
+-            <label htmlFor="portal-email">E-mail autorizado</label>
++            <label htmlFor="portal-email">E-mail</label>
+             <input id="portal-email" autoComplete="email" inputMode="email" required type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="voce@empresa.com.br" />
++            <label className={styles.secondLabel} htmlFor="portal-password">Senha</label>
++            <input id="portal-password" autoComplete="current-password" required type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder="Sua senha" />
+             <button disabled={submitting} type="submit">{submitting ? 'Verificando…' : 'Entrar no portal'} <span aria-hidden="true">→</span></button>
+-            <small>O acesso fica salvo neste dispositivo por 7 dias.</small>
++            <small>Não usamos link mágico. Seu acesso é individual e protegido por senha.</small>
+@@ -263,1 +312,31 @@ export default function ClientPortal({ slug }: { slug: string }) {
++  if (mustChangePassword) {
++    return <main className={styles.accessPage}>
++      <section className={styles.accessShell}>
++        <div className={styles.accessStory}>
++          <div className={styles.brand}><span className={styles.brandMark}>MH</span><span>Major Hub</span></div>
++          <div className={styles.storyContent}>
++            <span className={styles.kicker}>Primeiro acesso</span>
++            <h1>Uma senha só sua,<br />desde o início.</h1>
++            <p>A senha temporária abre a porta uma vez. Defina agora sua senha pessoal para continuar.</p>
++            <div className={styles.portalAddress}>majorhub.com.br/<strong>{slug}</strong></div>
++          </div>
++          <span className={styles.storyFoot}>Acesso individual · decisões identificadas</span>
++        </div>
++        <div className={styles.accessFormArea}>
++          <form className={styles.accessForm} onSubmit={changePassword}>
++            <span className={styles.mobileBrand}><span className={styles.brandMark}>MH</span> Major Hub</span>
++            <div className={styles.formNumber}>02</div>
++            <h2>Crie sua senha</h2>
++            <p>Use pelo menos 10 caracteres, com letra maiúscula, minúscula e número.</p>
++            {error && <div className={styles.formError} role="alert">{error}</div>}
++            <label htmlFor="new-password">Nova senha</label>
++            <input id="new-password" autoComplete="new-password" minLength={10} required type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} />
++            <label className={styles.secondLabel} htmlFor="confirm-password">Confirmar nova senha</label>
++            <input id="confirm-password" autoComplete="new-password" minLength={10} required type="password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} />
++            <button disabled={submitting} type="submit">{submitting ? 'Protegendo acesso…' : 'Salvar senha e continuar'} <span aria-hidden="true">→</span></button>
++            <small>Esta senha não será exibida para a equipe da Major Hub.</small>
++          </form>
++        </div>
++      </section>
++    </main>
++  }
++
+   if (!feed || !batch || !current) {
+@@ -270,2 +349,3 @@ export default function ClientPortal({ slug }: { slug: string }) {
+   const handle = feed.client.instagram?.replace(/^@/, '') || slug
+   const batchOpen = batch.status === 'open'
++  const canReview = feed.membership.role === 'client_admin' || feed.membership.role === 'approver'
+@@ -276,3 +356,4 @@ export default function ClientPortal({ slug }: { slug: string }) {
+       <div className={styles.headerRight}>
++        <div className={styles.sessionIdentity}><span>{feed.membership.name}</span><small>{feed.membership.role === 'viewer' ? 'Somente leitura' : 'Pode aprovar'}</small></div>
+         <div className={hubStyles.approvalClient}><div><strong>{feed.client.name}</strong><span>@{handle}</span></div>{feed.client.avatar_url ? (
+           // eslint-disable-next-line @next/next/no-img-element
+@@ -307,1 +388,1 @@ export default function ClientPortal({ slug }: { slug: string }) {
+-      {decisionSubmitting ? <div className={[styles.mobileResolved, styles.mobileSaving].join(' ')} role="status" aria-live="polite">{decisionSubmitting === 'approved' ? 'Aprovando publicação…' : 'Enviando correção…'}</div> : !batchOpen ? <div className={styles.mobileResolved}>Envio encerrado · disponível para consulta</div> : current.status === 'approved' || current.status === 'published' ? <div className={[styles.mobileResolved, styles.mobileApproved].join(' ')}>✓ Publicação aprovada</div> : current.status === 'changes_requested' || current.status === 'in_progress' ? <div className={[styles.mobileResolved, styles.mobileChanges].join(' ')}>Correção solicitada à equipe</div> : <>
++      {decisionSubmitting ? <div className={[styles.mobileResolved, styles.mobileSaving].join(' ')} role="status" aria-live="polite">{decisionSubmitting === 'approved' ? 'Aprovando publicação…' : 'Enviando correção…'}</div> : !batchOpen ? <div className={styles.mobileResolved}>Envio encerrado · disponível para consulta</div> : !canReview ? <div className={styles.mobileResolved}>Seu acesso é somente para visualização</div> : current.status === 'approved' || current.status === 'published' ? <div className={[styles.mobileResolved, styles.mobileApproved].join(' ')}>✓ Publicação aprovada</div> : current.status === 'changes_requested' || current.status === 'in_progress' ? <div className={[styles.mobileResolved, styles.mobileChanges].join(' ')}>Correção solicitada à equipe</div> : <>
+@@ -340,1 +421,1 @@ export default function ClientPortal({ slug }: { slug: string }) {
+-        {decisionSubmitting ? <div className={`${hubStyles.resolvedBox} ${styles.decisionSaving}`} role="status" aria-live="polite"><strong>{decisionSubmitting === 'approved' ? 'Aprovando publicação…' : 'Enviando correção…'}</strong><br />Registrando sua decisão com segurança.</div> : !batchOpen ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedApproved}`}><strong>Envio encerrado</strong><br />Este cronograma está disponível apenas para consulta.</div> : current.status === 'approved' || current.status === 'published' ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedApproved}`}><strong>✓ Publicação aprovada</strong><br />Sua aprovação já foi registrada.</div> : current.status === 'changes_requested' || current.status === 'in_progress' ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedChanges}`}><strong>Correção solicitada</strong><br />A equipe da Major Hub recebeu seu pedido.{current.latest_review?.comment && <span className={hubStyles.feedbackQuote}>{current.latest_review.comment}</span>}</div> : <>
++        {decisionSubmitting ? <div className={`${hubStyles.resolvedBox} ${styles.decisionSaving}`} role="status" aria-live="polite"><strong>{decisionSubmitting === 'approved' ? 'Aprovando publicação…' : 'Enviando correção…'}</strong><br />Registrando sua decisão com segurança.</div> : !batchOpen ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedApproved}`}><strong>Envio encerrado</strong><br />Este cronograma está disponível apenas para consulta.</div> : !canReview ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedApproved}`}><strong>Modo de visualização</strong><br />Seu acesso permite acompanhar os conteúdos sem registrar decisões.</div> : current.status === 'approved' || current.status === 'published' ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedApproved}`}><strong>✓ Publicação aprovada</strong><br />Sua aprovação já foi registrada.</div> : current.status === 'changes_requested' || current.status === 'in_progress' ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedChanges}`}><strong>Correção solicitada</strong><br />A equipe da Major Hub recebeu seu pedido.{current.latest_review?.comment && <span className={hubStyles.feedbackQuote}>{current.latest_review.comment}</span>}</div> : <>
+diff --git a/src/components/content-hub/ClientPortal.module.css b/src/components/content-hub/ClientPortal.module.css
+--- a/src/components/content-hub/ClientPortal.module.css
++++ b/src/components/content-hub/ClientPortal.module.css
+@@ -150,6 +150,22 @@
+ .accessForm input:focus { border-color: #6c9ee4; box-shadow: 0 0 0 4px rgba(40, 120, 255, .1); outline: 0; }
+ .accessForm input::placeholder { color: #9ba8b6; }
++
++.secondLabel { margin-top: 15px; }
++.sessionIdentity {
++  border-right: 1px solid rgba(125, 157, 184, .18);
++  padding-right: 16px;
++  text-align: right;
++}
++.sessionIdentity span {
++  color: #dce9f5;
++  display: block;
++  font: 650 10px var(--font-inter), sans-serif;
++}
++.sessionIdentity small {
++  color: #6d879d;
++  display: block;
++  font: 650 8px var(--font-inter), sans-serif;
++  margin-top: 2px;
++  text-transform: uppercase;
++}
+ 
+ .accessForm button {
+@@ -229,6 +245,7 @@
+ @media (max-width: 580px) {
+   .logoutButton { padding: 0 9px; }
+   .batchNav { padding-left: 13px; padding-right: 13px; }
++  .sessionIdentity { display: none; }
+ }

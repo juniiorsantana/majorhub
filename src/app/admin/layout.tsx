@@ -24,6 +24,17 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    href: '/admin/clientes',
+    label: 'Clientes',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.8"/>
+        <path d="M2.5 21v-2a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+        <path d="M16 3.4a4 4 0 0 1 0 7.2M18.5 14.8A4.5 4.5 0 0 1 22 19.2V21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
     href: '/admin/blog',
     label: 'Blog',
     icon: (

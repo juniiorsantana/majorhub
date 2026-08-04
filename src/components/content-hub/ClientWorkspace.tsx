@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { ContentCalendar, ContentClient, ContentPost, PostStatus } from '@/lib/content-hub/types'
 import { CALENDAR_STATUS_LABELS, POST_STATUS_LABELS } from '@/lib/content-hub/types'
+import ClientAccessManager from './ClientAccessManager'
 import styles from './ContentHub.module.css'
 
 interface PortalInfo {
@@ -172,9 +173,11 @@ export default function ClientWorkspace({ clientId }: { clientId: string }) {
       <div className={styles.surfaceHeader}><div><div className={styles.eyebrow} style={{ color: '#2878ff' }}>Portal permanente</div><strong style={{ color: '#13273f', fontSize: 17 }}>/{portal.portal_slug}</strong></div><button className={styles.primaryButton} type="button" onClick={copyPortal}>{copied ? 'Copiado ✓' : 'Copiar link do cliente'}</button></div>
       <div className={styles.surfaceBody} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(220px, .6fr)', gap: 18 }}>
         <div><p style={{ color: '#607188', fontSize: 13, lineHeight: 1.65, margin: 0 }}>Este endereço não expira e não precisa ser gerado novamente. Cada cronograma liberado mantém a lista de posts fixa dentro do portal.</p><div style={{ background: '#eaf2ff', border: '1px solid #cddfff', borderRadius: 11, color: '#245da9', fontSize: 12, marginTop: 13, padding: 12, wordBreak: 'break-all' }}>{portal.portal_url}</div></div>
-        <div style={{ background: '#fff', border: '1px solid #dfe5ed', borderRadius: 12, padding: 13 }}><span style={{ color: '#7b8a9c', display: 'block', fontSize: 9, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>E-mail autorizado</span><strong style={{ color: '#263a52', display: 'block', fontSize: 12, marginTop: 7, wordBreak: 'break-all' }}>{portal.approvers.find(item => item.active)?.email ?? client.email}</strong><span style={{ color: '#8b98a8', display: 'block', fontSize: 10, marginTop: 5 }}>Apenas este e-mail libera a entrada.</span></div>
+        <div style={{ background: '#fff', border: '1px solid #dfe5ed', borderRadius: 12, padding: 13 }}><span style={{ color: '#7b8a9c', display: 'block', fontSize: 9, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>Acesso protegido</span><strong style={{ color: '#263a52', display: 'block', fontSize: 12, marginTop: 7 }}>E-mail + senha individual</strong><span style={{ color: '#8b98a8', display: 'block', fontSize: 10, marginTop: 5 }}>Cada decisão fica vinculada à pessoa que entrou.</span></div>
       </div>
     </section>
+
+    <ClientAccessManager clientId={clientId} clientName={client.name} />
 
     <div className={styles.summaryRail}><div className={styles.summaryCard}><strong>{stats.total}</strong><span>Publicações</span></div><div className={styles.summaryCard}><strong>{stats.pending}</strong><span>Aguardando</span></div><div className={styles.summaryCard}><strong>{stats.changes}</strong><span>Correções</span></div><div className={styles.summaryCard}><strong>{stats.approved}</strong><span>Aprovadas</span></div></div>
     <div className={styles.toolbar} style={{ justifyContent: 'space-between' }}><div><div className={styles.eyebrow}>Linha de produção</div><strong style={{ color: '#dceafb', fontSize: 15 }}>Cronogramas de conteúdo</strong></div></div>

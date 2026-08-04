@@ -1,0 +1,168 @@
+.accessSection {
+  background: #f8fafc;
+  border: 1px solid #dce5ee;
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(5, 24, 43, .12);
+  color: #12283f;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.accessHeader {
+  align-items: flex-start;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  padding: 24px 26px 20px;
+}
+
+.kicker {
+  color: #2878ff;
+  display: block;
+  font: 800 9px var(--font-inter), sans-serif;
+  letter-spacing: .12em;
+  margin-bottom: 7px;
+  text-transform: uppercase;
+}
+
+.accessHeader h2,
+.modalHeader h3 {
+  color: #10263e;
+  font: 760 21px/1.2 var(--font-sora), sans-serif;
+  letter-spacing: -.025em;
+  margin: 0;
+}
+
+.accessHeader p {
+  color: #687a8e;
+  font: 450 12px/1.65 var(--font-inter), sans-serif;
+  margin: 8px 0 0;
+  max-width: 590px;
+}
+
+.primaryButton,
+.emptyState button {
+  background: #176ff2;
+  border: 1px solid #176ff2;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font: 750 12px var(--font-inter), sans-serif;
+  min-height: 39px;
+  padding: 0 15px;
+}
+
+.primaryButton:hover,
+.emptyState button:hover { background: #0e5fd7; }
+.primaryButton:disabled { cursor: wait; opacity: .58; }
+
+.accessRail {
+  background: #10263e;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.accessRail > div {
+  border-right: 1px solid rgba(255,255,255,.08);
+  padding: 16px 22px;
+}
+
+.accessRail > div:last-child { border-right: 0; }
+.accessRail strong { color: white; display: block; font: 750 23px var(--font-sora), sans-serif; }
+.accessRail span { color: #8198ae; display: block; font: 650 9px var(--font-inter), sans-serif; letter-spacing: .06em; margin-top: 3px; text-transform: uppercase; }
+
+.memberList { padding: 8px 16px 16px; }
+
+.memberRow {
+  align-items: center;
+  background: white;
+  border: 1px solid #e1e7ee;
+  border-left: 4px solid #2778ff;
+  border-radius: 12px;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(200px, 1.25fr) minmax(130px, .75fr) minmax(150px, .7fr) minmax(180px, .9fr);
+  margin-top: 8px;
+  padding: 14px 15px;
+}
+
+.memberRow[data-role='viewer'] { border-left-color: #8798aa; }
+.memberRow[data-role='client_admin'] { border-left-color: #7c5ce7; }
+.memberSuspended { background: #f3f5f7; opacity: .76; }
+
+.memberIdentity { align-items: center; display: flex; gap: 11px; min-width: 0; }
+.memberAvatar { align-items: center; background: #e8f1ff; border-radius: 10px; color: #2167c8; display: flex; flex: 0 0 38px; font: 800 11px var(--font-sora), sans-serif; height: 38px; justify-content: center; }
+.memberIdentity strong { color: #18314b; display: block; font: 720 12px var(--font-inter), sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.memberIdentity span:not(.memberAvatar) { color: #7c8c9c; display: block; font: 500 10px var(--font-inter), sans-serif; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.memberActivity strong { color: #3d5268; display: block; font: 650 10px var(--font-inter), sans-serif; margin-top: 4px; }
+.memberActivity small { color: #b26b22; display: block; font: 650 9px var(--font-inter), sans-serif; margin-top: 4px; }
+.metaLabel { color: #93a0ae; display: block; font: 800 8px var(--font-inter), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.roleField select { background: #f8fafc; border: 1px solid #dce4ec; border-radius: 8px; color: #263f58; font: 650 10px var(--font-inter), sans-serif; margin-top: 5px; min-height: 34px; padding: 0 28px 0 9px; width: 100%; }
+
+.memberActions { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.memberActions button { background: transparent; border: 0; color: #5e7184; cursor: pointer; font: 700 9px var(--font-inter), sans-serif; padding: 5px; }
+.memberActions button:hover { color: #176ff2; }
+.memberActions .dangerAction:hover { color: #b94940; }
+.memberActions .restoreAction { color: #17795a; }
+.statusBadge { border-radius: 999px; font: 800 8px var(--font-inter), sans-serif; letter-spacing: .05em; padding: 5px 8px; text-transform: uppercase; }
+.statusActive { background: #e9f7f1; color: #167553; }
+.statusSuspended { background: #eef0f3; color: #788594; }
+
+.errorBox,
+.noticeBox { border-radius: 9px; font: 600 11px/1.5 var(--font-inter), sans-serif; margin: 0 16px 10px; padding: 10px 12px; }
+.errorBox { background: #fff0ee; border: 1px solid #f5c9c4; color: #a94940; }
+.noticeBox { background: #eaf7f1; border: 1px solid #c9eadb; color: #176e51; }
+.loading { color: #7c8b9b; font: 600 11px var(--font-inter), sans-serif; padding: 30px; text-align: center; }
+.emptyState { align-items: center; color: #7b8998; display: flex; flex-direction: column; font: 500 11px/1.6 var(--font-inter), sans-serif; padding: 34px 22px 38px; text-align: center; }
+.emptyState strong { color: #263e56; font-size: 14px; }
+.emptyState span { margin: 5px 0 15px; max-width: 430px; }
+
+.modalBackdrop { align-items: center; background: rgba(4, 16, 29, .72); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 80; }
+.modal { background: #f8fafc; border: 1px solid rgba(255,255,255,.7); border-radius: 18px; box-shadow: 0 28px 90px rgba(0,0,0,.36); max-height: calc(100vh - 40px); max-width: 650px; overflow-y: auto; padding: 24px; width: 100%; }
+.resetModal { max-width: 510px; }
+.modalHeader { align-items: flex-start; display: flex; justify-content: space-between; margin-bottom: 22px; }
+.closeButton { background: #edf1f5; border: 0; border-radius: 8px; color: #617387; cursor: pointer; font-size: 22px; height: 32px; line-height: 1; width: 32px; }
+.formGrid { display: grid; gap: 15px; grid-template-columns: 1fr 1fr; }
+.formGrid label,
+.passwordLabel { color: #53667a; display: block; font: 750 9px var(--font-inter), sans-serif; letter-spacing: .04em; text-transform: uppercase; }
+.formGrid input,
+.formGrid select,
+.passwordLabel input { background: white; border: 1px solid #d8e1ea; border-radius: 10px; color: #142d46; font: 550 12px var(--font-inter), sans-serif; margin-top: 7px; min-height: 44px; padding: 0 12px; text-transform: none; width: 100%; }
+.formGrid input:focus,
+.formGrid select:focus,
+.passwordLabel input:focus { border-color: #6ea4ec; box-shadow: 0 0 0 3px rgba(40,120,255,.1); outline: 0; }
+.formGrid label > small { color: #8996a4; display: block; font: 500 9px/1.5 var(--font-inter), sans-serif; letter-spacing: 0; margin-top: 6px; text-transform: none; }
+.fullField { grid-column: 1 / -1; }
+.passwordControl { align-items: stretch; display: flex; gap: 6px; }
+.passwordControl input { min-width: 0; }
+.passwordControl button { background: #edf2f7; border: 1px solid #d8e1ea; border-radius: 9px; color: #52677c; cursor: pointer; font: 700 9px var(--font-inter), sans-serif; margin-top: 7px; padding: 0 10px; }
+.modalCopy { color: #718196; font: 500 11px/1.65 var(--font-inter), sans-serif; margin: -8px 0 20px; }
+.modalActions { align-items: center; border-top: 1px solid #e1e7ee; display: flex; gap: 8px; justify-content: flex-end; margin-top: 22px; padding-top: 17px; }
+.modalActions > button:not(.primaryButton) { background: transparent; border: 0; color: #68798b; cursor: pointer; font: 700 10px var(--font-inter), sans-serif; min-height: 38px; padding: 0 12px; }
+
+@media (max-width: 900px) {
+  .memberRow { grid-template-columns: minmax(180px, 1fr) minmax(140px, .7fr); }
+  .memberActions { justify-content: flex-start; }
+}
+
+@media (max-width: 620px) {
+  .accessHeader { align-items: stretch; flex-direction: column; padding: 20px; }
+  .accessHeader .primaryButton { width: 100%; }
+  .accessRail { grid-template-columns: 1fr 1fr; }
+  .accessRail > div:nth-child(2) { border-right: 0; }
+  .accessRail > div:nth-child(-n+2) { border-bottom: 1px solid rgba(255,255,255,.08); }
+  .memberList { padding: 5px 10px 12px; }
+  .memberRow { gap: 13px; grid-template-columns: 1fr; padding: 14px; }
+  .memberActions { border-top: 1px solid #e6ebf0; justify-content: flex-start; padding-top: 9px; }
+  .formGrid { grid-template-columns: 1fr; }
+  .fullField { grid-column: auto; }
+  .passwordControl { flex-wrap: wrap; }
+  .passwordControl input { flex: 1 0 100%; }
+  .passwordControl button { min-height: 34px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accessSection * { scroll-behavior: auto !important; transition: none !important; }
+}
