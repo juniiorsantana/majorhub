@@ -6,7 +6,7 @@ export const copy = {
   },
 
   dor: {
-    titulo: 'O problema não é falta de esforço. É falta de estrutura.',
+    titulo: 'Seu problema tem nome: falta de estrutura.',
     texto: 'Você investe. Você posta. Você contrata. Mas o lead não converte, o site não impressiona e a marca não reflete o que você realmente vale.',
     items: [
       'Tem Instagram ativo, mas o WhatsApp não para de chegar lead desqualificado',
@@ -71,7 +71,7 @@ export const copy = {
   ],
 
   diferencial: {
-    titulo: 'Um time de marketing inteiro. Zero contratações.',
+    titulo: 'Um time de marketing inteiro trabalhando pra você, sem contratar ninguém.',
     texto: 'Somos o cérebro criativo da sua operação. Um time completo — estrategista, designer, desenvolvedor e especialista em vendas — trabalhando como se fosse seu time interno. Você tem um único ponto de contato. A gente resolve o resto.',
     items: [
       { titulo: 'Time sob demanda', texto: 'Acesso a CMO, head de conteúdo, designer, especialista em tráfego e desenvolvedor — sem contratar nenhum deles.' },

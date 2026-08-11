@@ -1,0 +1,1043 @@
+<title>DroneAgro — Documento Técnico de Desenvolvimento</title>
+
+<style>
+  /* ---------------------------------------------------------------
+     Tema claro único e deliberado. Os blocos de dark abaixo repetem
+     os mesmos valores de propósito: o documento é para leitura e
+     impressão em claro, em qualquer preferência de sistema.
+     --------------------------------------------------------------- */
+  :root,
+  :root[data-theme="light"],
+  :root[data-theme="dark"] {
+    --bg:        #FBF9F4;
+    --surface:   #FFFFFF;
+    --surface-2: #F4F1E9;
+    --ink:       #16202B;
+    --ink-2:     #46566A;
+    --ink-3:     #7D8B9A;
+    --accent:    #2B5D93;
+    --accent-2:  #1C4270;
+    --wash:      #EDF2F8;
+    --keep:      #3B6B4D;
+    --rebuild:   #B0791C;
+    --drop:      #A44B2E;
+    --rule:      #DFDACE;
+    --rule-2:    #EDE9DF;
+    --code-bg:   #F6F4EC;
+    --shadow:    0 1px 2px rgba(22,32,43,.04), 0 10px 30px -18px rgba(22,32,43,.22);
+
+    --sans: system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #FBF9F4; --surface: #FFFFFF; --surface-2: #F4F1E9;
+      --ink: #16202B; --ink-2: #46566A; --ink-3: #7D8B9A;
+      --accent: #2B5D93; --accent-2: #1C4270; --wash: #EDF2F8;
+      --keep: #3B6B4D; --rebuild: #B0791C; --drop: #A44B2E;
+      --rule: #DFDACE; --rule-2: #EDE9DF; --code-bg: #F6F4EC;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- casca ---------- */
+
+  .doc {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    max-width: 1240px;
+    margin-inline: auto;
+    padding: 0 clamp(1.15rem, 4vw, 3rem);
+    align-items: start;
+  }
+
+  /* ---------- índice ---------- */
+
+  .indice {
+    position: sticky; top: 0;
+    max-height: 100vh; overflow-y: auto;
+    padding: 2.5rem 0;
+    font-size: .82rem;
+  }
+  .indice-titulo {
+    font-family: var(--mono); font-size: .63rem; letter-spacing: .17em;
+    text-transform: uppercase; color: var(--ink-3);
+    padding-bottom: .7rem; margin-bottom: .7rem; border-bottom: 1px solid var(--rule);
+  }
+  .indice ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .1rem; }
+  .indice a {
+    display: grid; grid-template-columns: 1.6rem 1fr; gap: .35rem;
+    padding: .34rem .5rem .34rem .3rem; border-radius: 3px;
+    color: var(--ink-2); text-decoration: none; line-height: 1.35;
+    border-left: 2px solid transparent;
+  }
+  .indice a:hover { background: var(--surface-2); color: var(--ink); }
+  .indice a .n { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); }
+  .indice a.ativo { color: var(--accent); background: var(--wash); border-left-color: var(--accent); font-weight: 600; }
+  .indice a.ativo .n { color: var(--accent); }
+
+  /* ---------- corpo ---------- */
+
+  main { padding: 2.5rem 0 6rem; min-width: 0; max-width: 74ch; }
+
+  header.capa { padding-bottom: 2.25rem; margin-bottom: 2.5rem; border-bottom: 2px solid var(--ink); }
+  .kicker {
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 1.1rem;
+  }
+  h1 {
+    margin: 0; font-size: clamp(1.9rem, 1.3rem + 2.2vw, 2.9rem);
+    font-weight: 800; letter-spacing: -.032em; line-height: 1.08; text-wrap: balance;
+  }
+  .sub { margin: 1rem 0 0; font-size: 1.08rem; color: var(--ink-2); line-height: 1.55; max-width: 58ch; }
+
+  .ficha {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin-top: 2rem;
+  }
+  .ficha div { background: var(--bg); padding: .75rem .9rem; }
+  .ficha dt { font-family: var(--mono); font-size: .61rem; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); }
+  .ficha dd { margin: .2rem 0 0; font-size: .87rem; font-weight: 600; }
+
+  section { margin-bottom: 3.5rem; scroll-margin-top: 1.5rem; }
+
+  h2 {
+    margin: 0 0 1.1rem; font-size: 1.5rem; font-weight: 750;
+    letter-spacing: -.022em; line-height: 1.2; text-wrap: balance;
+    display: grid; grid-template-columns: 2.1rem 1fr; align-items: baseline; gap: .4rem;
+  }
+  h2 .n { font-family: var(--mono); font-size: .95rem; color: var(--accent); font-weight: 700; }
+  h3 {
+    margin: 2rem 0 .7rem; font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em;
+    display: grid; grid-template-columns: 2.1rem 1fr; align-items: baseline; gap: .4rem;
+  }
+  h3 .n { font-family: var(--mono); font-size: .78rem; color: var(--ink-3); font-weight: 600; }
+  h4 { margin: 1.5rem 0 .5rem; font-size: .92rem; font-weight: 700; }
+
+  p { margin: 0 0 .95rem; }
+  main > section > p:first-of-type { color: var(--ink-2); }
+  .lede { font-size: 1.04rem; color: var(--ink-2); line-height: 1.6; }
+  strong { font-weight: 650; }
+  code {
+    font-family: var(--mono); font-size: .86em; background: var(--code-bg);
+    padding: .1em .35em; border-radius: 3px; border: 1px solid var(--rule-2);
+  }
+
+  ul, ol { margin: 0 0 .95rem; padding-left: 1.15rem; }
+  li { margin-bottom: .35rem; }
+  li::marker { color: var(--ink-3); }
+
+  /* ---------- premissa / bloqueio ---------- */
+
+  .premissa {
+    border-left: 3px solid var(--rebuild);
+    background: #FCF8EE;
+    padding: .85rem 1.1rem; margin: 1.1rem 0; font-size: .9rem; color: var(--ink-2);
+  }
+  .premissa b { color: var(--rebuild); font-family: var(--mono); font-size: .68rem; letter-spacing: .13em; text-transform: uppercase; display: block; margin-bottom: .3rem; }
+
+  .nota {
+    border-left: 3px solid var(--accent);
+    background: var(--wash);
+    padding: .85rem 1.1rem; margin: 1.1rem 0; font-size: .9rem; color: var(--ink-2);
+  }
+  .nota b { color: var(--accent-2); }
+
+  .revisar {
+    border: 1px solid var(--rule); background: var(--surface);
+    padding: 1.4rem 1.5rem; margin: 2.25rem 0 0; box-shadow: var(--shadow);
+  }
+  .revisar h4 { margin-top: 0; font-size: .68rem; font-family: var(--mono); letter-spacing: .15em; text-transform: uppercase; color: var(--accent); }
+  .revisar ol { margin: .6rem 0 0; padding-left: 1.2rem; font-size: .91rem; color: var(--ink-2); }
+  .revisar li { margin-bottom: .5rem; }
+
+  /* ---------- tabelas ---------- */
+
+  .tabela-rolagem { overflow-x: auto; margin: 1.2rem 0; border: 1px solid var(--rule); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: .87rem; }
+  th, td { text-align: left; padding: .62rem .8rem; border-bottom: 1px solid var(--rule-2); vertical-align: top; }
+  th {
+    font-family: var(--mono); font-size: .64rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 600; background: var(--surface-2);
+    border-bottom: 1px solid var(--rule); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td code { white-space: nowrap; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .pill {
+    display: inline-block; font-family: var(--mono); font-size: .63rem;
+    letter-spacing: .09em; text-transform: uppercase; font-weight: 700;
+    padding: .14rem .45rem; border-radius: 3px; white-space: nowrap;
+    border: 1px solid currentColor;
+  }
+  .p-keep    { color: var(--keep); background: #F0F5F1; }
+  .p-rebuild { color: var(--rebuild); background: #FBF5E6; }
+  .p-defer   { color: var(--ink-3); background: var(--surface-2); }
+  .p-drop    { color: var(--drop); background: #FAF0EC; }
+
+  /* ---------- schema ---------- */
+
+  pre {
+    margin: 1rem 0; padding: 1.1rem 1.2rem; overflow-x: auto;
+    background: var(--code-bg); border: 1px solid var(--rule);
+    font-family: var(--mono); font-size: .8rem; line-height: 1.55; color: var(--ink);
+    tab-size: 2;
+  }
+  pre b { color: var(--accent-2); font-weight: 700; }
+  pre i { color: var(--ink-3); font-style: normal; }
+
+  /* ---------- blocos de tarefa ---------- */
+
+  .bloco {
+    border: 1px solid var(--rule); background: var(--surface);
+    margin: 1.4rem 0; box-shadow: var(--shadow);
+  }
+  .bloco-topo {
+    display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap;
+    padding: .9rem 1.2rem; border-bottom: 1px solid var(--rule); background: var(--surface-2);
+  }
+  .bloco-id { font-family: var(--mono); font-size: .75rem; font-weight: 700; color: var(--accent); letter-spacing: .06em; }
+  .bloco-nome { font-size: .97rem; font-weight: 700; letter-spacing: -.01em; }
+  .bloco-fase { font-family: var(--mono); font-size: .64rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-left: auto; }
+  .tarefas { list-style: none; margin: 0; padding: 0; }
+  .tarefa { display: grid; grid-template-columns: 2.4rem 1fr; border-bottom: 1px solid var(--rule-2); }
+  .tarefa:last-child { border-bottom: 0; }
+  .tarefa > .id {
+    font-family: var(--mono); font-size: .74rem; font-weight: 700; color: var(--ink-3);
+    padding: .8rem 0 .8rem 1.2rem;
+  }
+  .tarefa > .corpo { padding: .8rem 1.2rem .8rem 0; min-width: 0; }
+  .tarefa .oque { font-size: .9rem; margin: 0; }
+  .tarefa .verif {
+    margin: .35rem 0 0; font-size: .81rem; color: var(--ink-2);
+    padding-left: .75rem; border-left: 2px solid var(--rule);
+  }
+  .tarefa .verif b { font-family: var(--mono); font-size: .63rem; letter-spacing: .11em; text-transform: uppercase; color: var(--keep); display: block; }
+  .bloco-pronto {
+    padding: .8rem 1.2rem; background: var(--wash); border-top: 1px solid var(--rule);
+    font-size: .84rem; color: var(--ink-2);
+  }
+  .bloco-pronto b { font-family: var(--mono); font-size: .63rem; letter-spacing: .11em; text-transform: uppercase; color: var(--accent-2); }
+
+  /* ---------- conclusão ---------- */
+
+  .checklist { list-style: none; margin: 1rem 0; padding: 0; }
+  .checklist li {
+    display: grid; grid-template-columns: 1.5rem 1fr; gap: .3rem;
+    padding: .55rem 0; border-bottom: 1px solid var(--rule-2); font-size: .9rem; color: var(--ink-2);
+  }
+  .checklist li::before {
+    content: ""; width: 15px; height: 15px; margin-top: .28rem;
+    border: 1.5px solid var(--ink-3); border-radius: 3px;
+  }
+
+  footer {
+    margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; color: var(--ink-3);
+  }
+
+  a.anchor { color: var(--ink-3); text-decoration: none; opacity: 0; padding-left: .4rem; font-weight: 400; }
+  h2:hover a.anchor, h3:hover a.anchor { opacity: 1; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  /* ---------- responsivo ---------- */
+
+  .indice-movel { display: none; }
+
+  @media (max-width: 900px) {
+    .doc { grid-template-columns: 1fr; gap: 0; }
+    .indice { display: none; }
+    .indice-movel {
+      display: block; margin: 1.5rem 0 0;
+      border: 1px solid var(--rule); background: var(--surface);
+    }
+    .indice-movel summary {
+      cursor: pointer; padding: .8rem 1rem; font-family: var(--mono);
+      font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent);
+    }
+    .indice-movel ol { margin: 0; padding: 0 1rem 1rem 2.2rem; font-size: .88rem; }
+    .indice-movel li { margin-bottom: .3rem; }
+    main { padding-top: 1.5rem; }
+    .tarefa { grid-template-columns: 2.2rem 1fr; }
+  }
+
+  @media print {
+    .indice, .indice-movel { display: none; }
+    .doc { display: block; max-width: none; }
+    main { max-width: none; }
+    body { font-size: 10.5pt; }
+    section { break-inside: auto; }
+    .bloco, .revisar, pre, .tabela-rolagem { break-inside: avoid; box-shadow: none; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+</style>
+
+<div class="doc">
+
+  <nav class="indice" aria-label="Índice do documento">
+    <p class="indice-titulo">Conteúdo</p>
+    <ol>
+      <li><a href="#s1"><span class="n">1</span><span>Contexto e objetivo</span></a></li>
+      <li><a href="#s2"><span class="n">2</span><span>O que existe hoje</span></a></li>
+      <li><a href="#s3"><span class="n">3</span><span>Decisões de arquitetura</span></a></li>
+      <li><a href="#s4"><span class="n">4</span><span>Stack</span></a></li>
+      <li><a href="#s5"><span class="n">5</span><span>Modelo de dados</span></a></li>
+      <li><a href="#s6"><span class="n">6</span><span>Inventário do protótipo</span></a></li>
+      <li><a href="#s7"><span class="n">7</span><span>Estrutura do projeto</span></a></li>
+      <li><a href="#s8"><span class="n">8</span><span>Plano de execução</span></a></li>
+      <li><a href="#s9"><span class="n">9</span><span>Bloqueios</span></a></li>
+      <li><a href="#s10"><span class="n">10</span><span>Critérios de conclusão</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="capa">
+      <p class="kicker">Major Hub · Documento técnico</p>
+      <h1>Sistema de gestão de pulverização agrícola</h1>
+      <p class="sub">
+        Especificação técnica para transformar o protótipo visual existente em um sistema de
+        produção. Documento para revisão — as premissas assumidas estão marcadas ao longo do texto.
+      </p>
+      <dl class="ficha">
+        <div><dt>Projeto</dt><dd>DroneAgro</dd></div>
+        <div><dt>Versão</dt><dd>1.0</dd></div>
+        <div><dt>Data</dt><dd>11/08/2026</dd></div>
+        <div><dt>Situação</dt><dd>Em revisão</dd></div>
+      </dl>
+
+      <div class="revisar">
+        <h4>O que precisamos que vocês validem</h4>
+        <p style="font-size:.91rem; color:var(--ink-2); margin:.5rem 0 0">
+          O documento inteiro é revisável, mas estes são os pontos onde uma discordância muda o
+          plano de verdade:
+        </p>
+        <ol>
+          <li><strong>A stack proposta na seção 4.</strong> É recomendação, não decisão fechada. Se o parceiro técnico preferir outra, os blocos de tarefa continuam válidos — muda a forma, não o conteúdo.</li>
+          <li><strong>O modelo de dados da seção 5</strong>, em especial a separação entre ordem de serviço e aplicação, e o tratamento de área não executada.</li>
+          <li><strong>A decisão de reconstruir a tela do operador</strong> em vez de portá-la (seção 6.2). É a mudança mais cara do inventário e a que mais precisa de contestação.</li>
+          <li><strong>O corte do MVP na seção 8</strong>: o que ficou de fora incomoda alguém?</li>
+        </ol>
+      </div>
+
+      <details class="indice-movel">
+        <summary>Índice</summary>
+        <ol>
+          <li><a href="#s1">Contexto e objetivo</a></li>
+          <li><a href="#s2">O que existe hoje</a></li>
+          <li><a href="#s3">Decisões de arquitetura</a></li>
+          <li><a href="#s4">Stack</a></li>
+          <li><a href="#s5">Modelo de dados</a></li>
+          <li><a href="#s6">Inventário do protótipo</a></li>
+          <li><a href="#s7">Estrutura do projeto</a></li>
+          <li><a href="#s8">Plano de execução</a></li>
+          <li><a href="#s9">Bloqueios</a></li>
+          <li><a href="#s10">Critérios de conclusão</a></li>
+        </ol>
+      </details>
+    </header>
+
+    <!-- 1 -->
+    <section id="s1">
+      <h2><span class="n">1</span><span>Contexto e objetivo<a class="anchor" href="#s1">#</a></span></h2>
+      <p class="lede">
+        Construir um sistema onde o registro da aplicação é feito uma vez, em campo, e gera os três
+        documentos que a operação precisa entregar: recomendação técnica, relatório técnico de
+        execução e relatório comercial.
+      </p>
+      <p>
+        Numa empresa de pulverização, o artefato central não é o painel nem o mapa — é o
+        <strong>registro da aplicação</strong>: o que foi aplicado, onde, quando, quanto, sob quais
+        condições, por quem e com autorização de quem. Esse registro comprova o serviço ao produtor,
+        atende à exigência legal, protege a empresa em caso de questionamento sobre a lavoura e
+        alimenta todo relatório posterior.
+      </p>
+      <p>
+        Toda a arquitetura e todo o sequenciamento deste documento derivam disso.
+      </p>
+      <div class="nota">
+        <b>Origem do levantamento.</b> A especificação foi construída a partir de três relatórios
+        reais de empresas de pulverização, que estabeleceram os campos obrigatórios, e de dois
+        trabalhos acadêmicos sobre qualidade de aplicação, que estabeleceram os parâmetros
+        operacionais. Não é um modelo genérico de gestão de serviços.
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="s2">
+      <h2><span class="n">2</span><span>O que existe hoje<a class="anchor" href="#s2">#</a></span></h2>
+      <p>
+        Um repositório privado com um protótipo visual gerado no Google AI Studio: 23 arquivos
+        versionados, 2 commits, 10 telas em React 19 + Vite 6 + Tailwind v4. A verificação de tipos
+        passa limpa e o visual é coerente e detalhado.
+      </p>
+      <p>
+        Não é uma aplicação. Todo o conteúdo está escrito à mão dentro do JSX. Uma varredura no
+        código não encontra nenhuma ocorrência de <code>fetch</code>, <code>localStorage</code> ou
+        <code>useEffect</code>.
+      </p>
+
+      <div class="tabela-rolagem">
+        <table>
+          <thead>
+            <tr><th>Camada</th><th>Situação</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Visual e layout</td><td><span class="pill p-keep">Pronto</span> Reaproveitável quase integralmente</td></tr>
+            <tr><td>Roteamento</td><td><span class="pill p-drop">Ausente</span> Navegação por <code>useState</code> + <code>switch</code>; sem URL nem histórico</td></tr>
+            <tr><td>Dados</td><td><span class="pill p-drop">Ausente</span> Conteúdo literal no JSX</td></tr>
+            <tr><td>Backend</td><td><span class="pill p-drop">Ausente</span> —</td></tr>
+            <tr><td>Autenticação e papéis</td><td><span class="pill p-drop">Ausente</span> Usuário é texto fixo em <code>SideNav.tsx</code></td></tr>
+            <tr><td>Offline</td><td><span class="pill p-drop">Ausente</span> Sem service worker</td></tr>
+            <tr><td>Mapa</td><td><span class="pill p-drop">Ausente</span> É um <code>div</code> com gradiente e polígonos em CSS</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Há ainda resíduo do gerador a limpar: <code>package.json</code> nomeado
+        <code>react-example</code>; as dependências <code>@google/genai</code>,
+        <code>express</code>, <code>dotenv</code> e <code>lucide-react</code> declaradas mas nunca
+        importadas; <code>metadata.json</code> e <code>.env.example</code> específicos da plataforma
+        do AI Studio; fontes carregadas de CDN do Google; e um avatar apontando para uma URL
+        temporária do <code>googleusercontent</code>.
+      </p>
+
+      <h3><span class="n">2.1</span><span>Consequência: portar, não refatorar</span></h3>
+      <p>
+        Não há fundação a refatorar. O trabalho é <strong>portar a camada visual para uma base
+        nova</strong>. O desenho sobrevive; o código de infraestrutura, não.
+      </p>
+      <p>
+        A alternativa — enxertar roteamento, banco, autenticação e controle de acesso dentro do
+        repositório atual — custa mais, porque cada componente tem os dados escritos dentro do JSX
+        e precisaria ser aberto de qualquer forma. Fazer isso sobre uma fundação correta custa o
+        mesmo e não herda as decisões do gerador.
+      </p>
+    </section>
+
+    <!-- 3 -->
+    <section id="s3">
+      <h2><span class="n">3</span><span>Decisões de arquitetura<a class="anchor" href="#s3">#</a></span></h2>
+      <p>Cinco decisões que afetam estrutura, não funcionalidade. Cada uma é cara de reverter depois.</p>
+
+      <h3><span class="n">3.1</span><span>Offline por fila de saída, não por sincronização</span></h3>
+      <p>
+        O fluxo de dados do operador em campo é <strong>somente de escrita</strong>. Ele cria
+        registros — iniciei, apliquei, terminei, fotografei — e lê muito pouco: apenas a ordem de
+        serviço do dia, que pode ser baixada antes de sair.
+      </p>
+      <p>
+        Isso dispensa motor de sincronização bidirecional (ElectricSQL, PowerSync, WatermelonDB).
+        Basta: baixar as ordens do dia com conexão, guardar em IndexedDB, gravar as ações numa fila
+        de saída local e despachá-la quando o sinal voltar, com repetição e idempotência.
+      </p>
+      <p>
+        É uma diferença grande de complexidade, e a mais fácil de depurar quando falhar no meio da
+        lavoura — e vai falhar.
+      </p>
+      <div class="premissa">
+        <b>Premissa a validar</b>
+        Assumimos que as fazendas onde a operação atua <strong>não têm sinal confiável</strong>.
+        É a suposição segura: projetar para offline desde o início custa pouco; descobrir a
+        necessidade depois obriga a reescrever a camada de dados.
+      </div>
+
+      <h3><span class="n">3.2</span><span>Uma aplicação, quatro papéis</span></h3>
+      <p>
+        Operador, gestor, agrônomo e produtor usam o mesmo sistema, com superfícies distintas e
+        isolamento em nível de linha no banco. O produtor não enxerga nada da operação interna —
+        vê apenas as aplicações nas propriedades dele.
+      </p>
+      <p>
+        Dois sistemas separados dobrariam o custo de manutenção permanentemente para resolver um
+        problema que é de autorização.
+      </p>
+
+      <h3><span class="n">3.3</span><span>Isolamento por organização desde o início</span></h3>
+      <p>
+        Toda tabela carrega <code>organizacao_id</code>, mesmo existindo hoje uma única
+        organização. Não haverá tela de gestão de organizações, cobrança nem cadastro
+        self-service — apenas a coluna e o isolamento na consulta.
+      </p>
+      <p>
+        É o hedge mais barato do projeto: custa minutos agora e viabiliza vender o sistema a outras
+        empresas depois, sem migração.
+      </p>
+
+      <h3><span class="n">3.4</span><span>Ordem de serviço e aplicação são entidades distintas</span></h3>
+      <p>
+        O planejado e o executado divergem por natureza: prevê-se 450 ha e aplicam-se 380 porque o
+        vento subiu. Colapsar as duas entidades numa só elimina a comparação entre previsto e
+        realizado, que é metade do valor gerencial do sistema.
+      </p>
+      <p>
+        Os relatórios reais confirmam: um deles registra pulverizações “efetuadas em datas
+        variadas”, com dois pilotos e dois modelos de drone numa mesma contratação. Uma ordem de
+        serviço tem N aplicações, cada uma com seu operador, equipamento, data e tipo de voo.
+      </p>
+
+      <h3><span class="n">3.5</span><span>Condições climáticas são registro, não consulta</span></h3>
+      <p>
+        Temperatura, umidade e vento são gravados na aplicação, no momento em que ela ocorre, e
+        nunca buscados de uma API depois. É prova legal — um valor reconstruído a posteriori não
+        vale como registro da condição em que se aplicou.
+      </p>
+    </section>
+
+    <!-- 4 -->
+    <section id="s4">
+      <h2><span class="n">4</span><span>Stack<a class="anchor" href="#s4">#</a></span></h2>
+      <div class="premissa">
+        <b>Premissa a validar</b>
+        Esta é a recomendação, não uma decisão fechada. É o ponto do documento que mais se
+        beneficia da opinião do parceiro técnico. Se mudar, os blocos de tarefa da seção 8
+        permanecem válidos — muda a forma das tarefas, não o conteúdo.
+      </div>
+
+      <div class="tabela-rolagem">
+        <table>
+          <thead><tr><th>Camada</th><th>Proposta</th><th>Justificativa</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Frontend</td><td><strong>Next.js</strong> (App Router) + TypeScript</td>
+              <td>Roteamento real, geração de PDF no servidor, quatro superfícies distintas; render no servidor ajuda em conexão ruim</td>
+            </tr>
+            <tr>
+              <td>App de campo</td><td><strong>PWA</strong> no mesmo projeto</td>
+              <td>Evita segundo código-base e dependência de loja. Migrar para nativo só se surgir exigência de hardware, como GPS contínuo em segundo plano</td>
+            </tr>
+            <tr>
+              <td>Banco e autenticação</td><td><strong>Postgres com RLS</strong></td>
+              <td>Segurança em nível de linha mapeia diretamente nos quatro papéis e no isolamento por produtor</td>
+            </tr>
+            <tr>
+              <td>Estilo</td><td><strong>Tailwind v4</strong></td>
+              <td>Mantido do protótipo — é onde o visual já está resolvido</td>
+            </tr>
+            <tr>
+              <td>Offline</td><td><strong>IndexedDB</strong> + fila de saída própria</td>
+              <td>Ver seção 3.1</td>
+            </tr>
+            <tr>
+              <td>PDF</td><td>Geração <strong>no servidor</strong></td>
+              <td>Documento com valor legal não pode depender do navegador do usuário</td>
+            </tr>
+            <tr>
+              <td>Mapa</td><td><strong>Adiado</strong></td>
+              <td>Fora do MVP. Ver seção 8</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="s5">
+      <h2><span class="n">5</span><span>Modelo de dados<a class="anchor" href="#s5">#</a></span></h2>
+      <p>
+        Todas as tabelas carregam <code>organizacao_id</code>. Campos marcados como
+        <i>Fase 3</i> ou <i>Fase 4</i> entram depois, mas o desenho já os prevê.
+      </p>
+
+      <h3><span class="n">5.1</span><span>Cadastro</span></h3>
+<pre><b>organizacao</b>        id, nome, cnpj, endereco, telefone,
+                   rt_nome, rt_crea, registro_caar, registro_mapa
+                   <i>→ alimenta o rodapé de todo documento gerado</i>
+
+<b>usuario</b>            id, organizacao_id, nome, email, papel, ativo
+                   papel: gestor | operador | agronomo | produtor
+                   cliente_id  <i>(apenas quando papel = produtor)</i>
+
+<b>cliente</b>            id, organizacao_id, nome, cnpj_cpf, telefone, email
+<b>propriedade</b>        id, cliente_id, nome, municipio, uf, localizacao
+<b>talhao</b>             id, propriedade_id, nome, area_ha, cultura
+                   geometria   <i>→ nulo até a Fase 4</i>
+
+<b>equipamento</b>        id, organizacao_id, modelo, numero_serie,
+                   registro_anac, registro_sisant, tipo_de_bico, ativo
+
+<b>parametro_de_voo</b>   id, equipamento_id,
+                   vento_min_kmh, vento_max_kmh,
+                   velocidade_kmh, tamanho_gota_micras,
+                   altura_sem_obstaculo_m, altura_com_obstaculo_m,
+                   vazao_l_ha
+                   <i>→ uma linha por faixa de vento, por equipamento</i>
+
+<b>produto</b>            id, organizacao_id, nome_comercial, principio_ativo,
+                   registro_mapa, classe_toxicologica, fabricante, unidade
+
+<b>texto_padrao</b>       id, organizacao_id, chave, titulo, corpo, versao, ativo
+                   <i>→ ressalvas jurídicas reutilizáveis nos relatórios</i></pre>
+
+      <h3><span class="n">5.2</span><span>Operação</span></h3>
+<pre><b>ordem_servico</b>      id, organizacao_id, numero, cliente_id, propriedade_id,
+                   data_prevista, status, preco_por_hectare,
+                   operador_id, equipamento_id,
+                   receituario_id   <i>→ nulo até a Fase 3</i>
+                   status: rascunho | agendada | em_execucao |
+                           concluida | cancelada
+
+<b>ordem_servico_talhao</b>
+                   ordem_servico_id, talhao_id, area_prevista_ha
+
+<b>aplicacao</b>          id, organizacao_id, ordem_servico_id, talhao_id,
+                   inicio, fim,
+                   operador_id, equipamento_id,   <i>← quem e o que de fato foi</i>
+                   tipo_de_voo,                   <i>← automatico | manual</i>
+                   area_aplicada_ha,
+                   temperatura_c, umidade_pct, vento_kmh,
+                   delta_t, faixa_delta_t,        <i>← verde | amarelo | vermelho</i>
+                   parametro_de_voo_id,           <i>← faixa de vento aplicada</i>
+                   observacoes,
+                   registrado_offline_em          <i>← auditoria da fila de saída</i>
+
+<b>aplicacao_produto</b>  id, aplicacao_id, produto_id,
+                   dose_por_ha, quantidade_total, volume_calda_l,
+                   lote, nota_fiscal              <i>→ Fase 3</i>
+
+<b>area_nao_executada</b> id, organizacao_id, ordem_servico_id, aplicacao_id,
+                   area_ha, motivo, observacao
+                   motivo: interferencia_magnetica | sem_visada_vlos |
+                           mata_nativa | divisa | limitacao_altitude |
+                           obstaculo | clima | outro
+
+<b>interrupcao</b>        id, aplicacao_id, momento, motivo, retomada_em
+<b>foto</b>               id, aplicacao_id, url, legenda, capturada_em
+
+<b>documento</b>          id, organizacao_id, ordem_servico_id, tipo,
+                   url_pdf, gerado_em, gerado_por
+                   tipo: recomendacao_tecnica | relatorio_tecnico |
+                         relatorio_comercial</pre>
+
+      <h3><span class="n">5.3</span><span>Invariantes</span></h3>
+      <p>Quatro regras que o schema precisa garantir, não a aplicação:</p>
+      <ol>
+        <li>
+          <strong>Área cobrada é a soma de <code>aplicacao.area_aplicada_ha</code>.</strong>
+          Nunca a área prevista do talhão, nunca incluindo área não executada. Os relatórios reais
+          são explícitos: cobra-se apenas onde se aplicou.
+        </li>
+        <li>
+          <strong>Condições climáticas pertencem à aplicação</strong> e são gravadas no momento.
+          Ver 3.5.
+        </li>
+        <li>
+          <strong>A aplicação guarda operador e equipamento próprios</strong>, mesmo quando
+          coincidem com os da ordem de serviço. O relatório precisa mostrar o executado, não o
+          planejado.
+        </li>
+        <li>
+          <strong>O filtro por organização é responsabilidade do banco</strong>, via RLS, não de
+          um <code>where</code> escrito na aplicação. Um filtro esquecido em uma consulta vira
+          vazamento entre clientes.
+        </li>
+      </ol>
+    </section>
+
+    <!-- 6 -->
+    <section id="s6">
+      <h2><span class="n">6</span><span>Inventário do protótipo<a class="anchor" href="#s6">#</a></span></h2>
+      <p>Destino de cada componente de tela. Esta tabela é a lista de trabalho do porte.</p>
+
+      <div class="tabela-rolagem">
+        <table>
+          <thead><tr><th>Componente</th><th>Destino</th><th>Fase</th><th>Observação</th></tr></thead>
+          <tbody>
+            <tr><td><code>SideNav</code></td><td><span class="pill p-keep">Portar</span></td><td class="num">0</td><td>Vira shell de navegação; itens passam a filtrar por papel. Os dois itens sem destino ganham tela ou saem</td></tr>
+            <tr><td><code>ListagemDeProjetos</code></td><td><span class="pill p-keep">Portar</span></td><td class="num">1</td><td>Renomear para listagem de ordens de serviço</td></tr>
+            <tr><td><code>DetalheDoProjeto</code></td><td><span class="pill p-keep">Portar</span></td><td class="num">1</td><td>Renomear para detalhe da OS</td></tr>
+            <tr><td><code>CalendarioOperacional</code></td><td><span class="pill p-keep">Portar</span></td><td class="num">1</td><td>Vira agenda de ordens de serviço</td></tr>
+            <tr><td><code>GestaoDeEquipe</code></td><td><span class="pill p-keep">Portar</span></td><td class="num">1</td><td>Vira cadastro de equipe com papel</td></tr>
+            <tr><td><code>RelatorioDeOperacao</code></td><td><span class="pill p-keep">Portar</span></td><td class="num">1</td><td>Base visual do PDF do relatório técnico</td></tr>
+            <tr><td><code>OperacaoEmAndamento</code></td><td><span class="pill p-rebuild">Reconstruir</span></td><td class="num">1</td><td>Ver 6.2 — a mudança mais relevante do inventário</td></tr>
+            <tr><td><code>PortalDoCliente</code></td><td><span class="pill p-keep">Portar</span></td><td class="num">2</td><td>Passa a ser acesso separado, não tela interna</td></tr>
+            <tr><td><code>DashboardExecutiva</code></td><td><span class="pill p-defer">Adiar</span></td><td class="num">5</td><td>Painel sem histórico é tela vazia. Aproveitar os componentes de indicador agora</td></tr>
+            <tr><td><code>MapaDeAplicacao</code></td><td><span class="pill p-defer">Adiar</span></td><td class="num">4</td><td>Não há nada geoespacial a portar</td></tr>
+            <tr><td><code>IntegracoesDJI</code></td><td><span class="pill p-defer">Adiar</span></td><td class="num">5</td><td>É tela, não integração</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3><span class="n">6.1</span><span>Infraestrutura</span></h3>
+      <p>
+        Saem: <code>package.json</code>, <code>vite.config.ts</code>, <code>tsconfig.json</code>,
+        <code>index.html</code>, <code>metadata.json</code>, <code>src/main.tsx</code>,
+        <code>src/App.tsx</code> e <code>src/types.ts</code>. É reescrito:
+        <code>.env.example</code>. Permanece e é portado: <code>src/index.css</code>, que
+        concentra os tokens visuais.
+      </p>
+      <p>
+        Atenção a um detalhe fácil de perder: as fontes Inter e Material Symbols vêm de CDN do
+        Google no <code>index.html</code>. Precisam ser auto-hospedadas.
+      </p>
+
+      <h3><span class="n">6.2</span><span>Por que a tela do operador é reconstruída</span></h3>
+      <p>
+        <code>OperacaoEmAndamento</code> é a tela mais elaborada do protótipo. Também é a que está
+        desenhada para o usuário errado.
+      </p>
+      <p>
+        Como está, ela é <strong>um gestor observando telemetria</strong>: mapa ocupando o centro,
+        indicador de transmissão ao vivo, botão de pausar, barra de progresso do talhão. É uma
+        interface de acompanhamento.
+      </p>
+      <p>
+        O que o MVP precisa é o oposto: <strong>um operador registrando dados</strong>, sob sol
+        forte, possivelmente de luva, provavelmente sem sinal, querendo concluir rápido para voltar
+        a voar. Campos grandes, poucos toques, funcionamento offline integral, sem mapa.
+      </p>
+      <p>
+        Não é diferença de estilo, é diferença de propósito. Portar o layout e trocar os rótulos
+        produziria uma tela bonita que o operador não adota — e a não adoção pelo operador é o
+        risco que zera o valor de todo o projeto.
+      </p>
+      <p>
+        Aproveitável dela: a paleta escura, adequada à leitura sob sol; o cabeçalho compacto; e o
+        tratamento dos indicadores numéricos.
+      </p>
+
+      <h3><span class="n">6.3</span><span>Vocabulário</span></h3>
+      <p>
+        O protótipo criou o termo “Projetos”. A operação, os relatórios e o contrato falam em
+        <strong>ordem de serviço</strong>, <strong>aplicação</strong>, <strong>talhão</strong> e
+        <strong>propriedade</strong>. Código e interface devem usar as palavras que o cliente usa.
+      </p>
+    </section>
+
+    <!-- 7 -->
+    <section id="s7">
+      <h2><span class="n">7</span><span>Estrutura do projeto<a class="anchor" href="#s7">#</a></span></h2>
+<pre>app/
+  (auth)/login
+  (gestor)/                 <i>ordens, agenda, cadastros, relatórios</i>
+  (campo)/                  <i>operador: a OS do dia e o registro</i>
+  (produtor)/               <i>portal, somente leitura — Fase 2</i>
+  (agronomo)/               <i>receituário — Fase 3</i>
+  api/
+    documentos/[tipo]       <i>geração de PDF no servidor</i>
+    sync/                   <i>recebe a fila de saída do campo</i>
+
+lib/
+  db/          <i>schema, migrações, consultas</i>
+  auth/        <i>sessão e papéis</i>
+  offline/     <i>cache da OS do dia, fila de saída, despacho</i>
+  documentos/  <i>montagem dos três PDFs</i>
+  dominio/     <i>delta-t, cálculo de área e de valor</i>
+
+components/
+  ui/          <i>portados do protótipo</i>
+  shell/       <i>navegação por papel</i></pre>
+      <p>
+        Uma rota por papel, isoladas por grupo, para que o operador não carregue o código do
+        gestor — o que importa em conexão ruim.
+      </p>
+    </section>
+
+    <!-- 8 -->
+    <section id="s8">
+      <h2><span class="n">8</span><span>Plano de execução<a class="anchor" href="#s8">#</a></span></h2>
+      <p>
+        Seis blocos, 33 tarefas, cobrindo da fundação ao portal do produtor. Trabalhar um bloco por
+        vez. Cada tarefa tem verificação própria — se não dá para verificar, não está pronta.
+      </p>
+      <div class="premissa">
+        <b>Escopo deste plano</b>
+        As tarefas cobrem as Fases 0, 1 e 2. As fases seguintes — conformidade e receituário,
+        georreferenciamento, integração com o drone — estão especificadas em nível de objetivo,
+        mas não quebradas em tarefas: dependem de respostas que ainda não temos, e detalhá-las
+        agora seria precisão falsa.
+      </div>
+
+      <div class="bloco">
+        <div class="bloco-topo">
+          <span class="bloco-id">Bloco A</span>
+          <span class="bloco-nome">Fundação</span>
+          <span class="bloco-fase">Fase 0 · ≈ 4 semanas</span>
+        </div>
+        <ul class="tarefas">
+          <li class="tarefa"><span class="id">A1</span><div class="corpo">
+            <p class="oque">Confirmar a stack da seção 4 e criar o projeto</p>
+            <p class="verif"><b>Verificar</b> o servidor de desenvolvimento sobe e responde</p>
+          </div></li>
+          <li class="tarefa"><span class="id">A2</span><div class="corpo">
+            <p class="oque">Provisionar Postgres e autenticação</p>
+            <p class="verif"><b>Verificar</b> conectar ao banco e listar o schema vazio</p>
+          </div></li>
+          <li class="tarefa"><span class="id">A3</span><div class="corpo">
+            <p class="oque">Portar <code>src/index.css</code> e os tokens visuais para o tema Tailwind v4</p>
+            <p class="verif"><b>Verificar</b> página de amostra com botão, card e tipografia idênticos ao protótipo, comparados lado a lado</p>
+          </div></li>
+          <li class="tarefa"><span class="id">A4</span><div class="corpo">
+            <p class="oque">Auto-hospedar as fontes e os ícones</p>
+            <p class="verif"><b>Verificar</b> nenhuma requisição a <code>fonts.googleapis.com</code> na aba de rede</p>
+          </div></li>
+          <li class="tarefa"><span class="id">A5</span><div class="corpo">
+            <p class="oque">Migração inicial: <code>organizacao</code>, <code>usuario</code>, papéis e RLS</p>
+            <p class="verif"><b>Verificar</b> consulta autenticada como organização A não retorna nenhuma linha da organização B</p>
+          </div></li>
+          <li class="tarefa"><span class="id">A6</span><div class="corpo">
+            <p class="oque">Login com redirecionamento por papel</p>
+            <p class="verif"><b>Verificar</b> quatro usuários de teste, cada um cai numa rota diferente</p>
+          </div></li>
+          <li class="tarefa"><span class="id">A7</span><div class="corpo">
+            <p class="oque">Portar o <code>SideNav</code> como shell, com itens filtrados por papel</p>
+            <p class="verif"><b>Verificar</b> operador não vê “Equipe”; produtor não vê “Calendário”</p>
+          </div></li>
+          <li class="tarefa"><span class="id">A8</span><div class="corpo">
+            <p class="oque">Ambientes e publicação automatizada</p>
+            <p class="verif"><b>Verificar</b> push na branch principal publica em homologação; produção responde</p>
+          </div></li>
+        </ul>
+        <p class="bloco-pronto"><b>Pronto quando</b> &nbsp;um usuário de cada papel entra em produção e vê uma tela vazia diferente.</p>
+      </div>
+
+      <div class="bloco">
+        <div class="bloco-topo">
+          <span class="bloco-id">Bloco B</span>
+          <span class="bloco-nome">Cadastros</span>
+          <span class="bloco-fase">Fase 1</span>
+        </div>
+        <ul class="tarefas">
+          <li class="tarefa"><span class="id">B1</span><div class="corpo">
+            <p class="oque"><code>cliente</code>, <code>propriedade</code>, <code>talhao</code></p>
+            <p class="verif"><b>Verificar</b> criar produtor → fazenda → talhão de 120 ha e ver na listagem</p>
+          </div></li>
+          <li class="tarefa"><span class="id">B2</span><div class="corpo">
+            <p class="oque"><code>equipamento</code> com registros ANAC e SISANT</p>
+            <p class="verif"><b>Verificar</b> cadastrar um T25 e encontrá-lo no seletor da OS</p>
+          </div></li>
+          <li class="tarefa"><span class="id">B3</span><div class="corpo">
+            <p class="oque"><code>parametro_de_voo</code> por faixa de vento</p>
+            <p class="verif"><b>Verificar</b> com as duas faixas do T25 cadastradas, uma aplicação com vento de 3 km/h sugere 15 km/h e 410 µm</p>
+          </div></li>
+          <li class="tarefa"><span class="id">B4</span><div class="corpo">
+            <p class="oque"><code>produto</code> com princípio ativo e classe toxicológica</p>
+            <p class="verif"><b>Verificar</b> cadastrar um fungicida classe III com princípio ativo</p>
+          </div></li>
+          <li class="tarefa"><span class="id">B5</span><div class="corpo">
+            <p class="oque"><code>usuario</code> e equipe com papel</p>
+            <p class="verif"><b>Verificar</b> criar um operador; ele entra e chega direto na rota de campo</p>
+          </div></li>
+          <li class="tarefa"><span class="id">B6</span><div class="corpo">
+            <p class="oque">Dados da organização: CNPJ, CREA do RT, registro CAAR</p>
+            <p class="verif"><b>Verificar</b> os dados aparecem no rodapé de um PDF de teste</p>
+          </div></li>
+          <li class="tarefa"><span class="id">B7</span><div class="corpo">
+            <p class="oque"><code>texto_padrao</code> versionado</p>
+            <p class="verif"><b>Verificar</b> cadastrar a ressalva de carência de reentrada e vê-la sair no PDF</p>
+          </div></li>
+        </ul>
+      </div>
+
+      <div class="bloco">
+        <div class="bloco-topo">
+          <span class="bloco-id">Bloco C</span>
+          <span class="bloco-nome">Ordem de serviço</span>
+          <span class="bloco-fase">Fase 1</span>
+        </div>
+        <ul class="tarefas">
+          <li class="tarefa"><span class="id">C1</span><div class="corpo">
+            <p class="oque">Criar OS com cliente, propriedade, talhões, data, operador, equipamento e preço por hectare</p>
+            <p class="verif"><b>Verificar</b> OS salva e aparece na agenda no dia correto</p>
+          </div></li>
+          <li class="tarefa"><span class="id">C2</span><div class="corpo">
+            <p class="oque">Portar o calendário como agenda de ordens</p>
+            <p class="verif"><b>Verificar</b> OS de amanhã aparece na data certa</p>
+          </div></li>
+          <li class="tarefa"><span class="id">C3</span><div class="corpo">
+            <p class="oque">Portar listagem e detalhe, renomeando para OS</p>
+            <p class="verif"><b>Verificar</b> filtrar por status e por cliente retorna o esperado</p>
+          </div></li>
+          <li class="tarefa"><span class="id">C4</span><div class="corpo">
+            <p class="oque">Transições de status</p>
+            <p class="verif"><b>Verificar</b> agendada → em execução → concluída, sem permitir pular etapa</p>
+          </div></li>
+        </ul>
+      </div>
+
+      <div class="bloco">
+        <div class="bloco-topo">
+          <span class="bloco-id">Bloco D</span>
+          <span class="bloco-nome">Registro de aplicação — o núcleo</span>
+          <span class="bloco-fase">Fase 1</span>
+        </div>
+        <ul class="tarefas">
+          <li class="tarefa"><span class="id">D1</span><div class="corpo">
+            <p class="oque">Reconstruir a tela do operador — ver seção 6.2</p>
+            <p class="verif"><b>Verificar</b> um piloto real registra uma aplicação completa em menos de dois minutos, de luva</p>
+          </div></li>
+          <li class="tarefa"><span class="id">D2</span><div class="corpo">
+            <p class="oque"><code>aplicacao</code> com início, fim, condições e área por tipo de voo</p>
+            <p class="verif"><b>Verificar</b> registrar 24,9 ha automático e 7,7 ha manual; total 32,6 ha</p>
+          </div></li>
+          <li class="tarefa"><span class="id">D3</span><div class="corpo">
+            <p class="oque"><code>area_nao_executada</code> com motivo de lista fechada</p>
+            <p class="verif"><b>Verificar</b> registrar 5 ha como “sem visada / VLOS”; o valor cobrado não inclui esses 5 ha</p>
+          </div></li>
+          <li class="tarefa"><span class="id">D4</span><div class="corpo">
+            <p class="oque"><code>aplicacao_produto</code> com dose e volume de calda</p>
+            <p class="verif"><b>Verificar</b> três produtos lançados; volume total de calda calculado corretamente</p>
+          </div></li>
+          <li class="tarefa"><span class="id">D5</span><div class="corpo">
+            <p class="oque">Semáforo Delta T na tela do operador</p>
+            <p class="verif"><b>Verificar</b> 26 °C e 68% devolve verde; 36 °C e 40% devolve vermelho</p>
+          </div></li>
+          <li class="tarefa"><span class="id">D6</span><div class="corpo">
+            <p class="oque">Offline: cache da OS do dia e fila de saída</p>
+            <p class="verif"><b>Verificar</b> com o navegador offline, registrar aplicação completa; ao voltar a conexão o registro sobe sozinho, e repetir o envio não duplica</p>
+          </div></li>
+          <li class="tarefa"><span class="id">D7</span><div class="corpo">
+            <p class="oque">Fotos anexadas offline</p>
+            <p class="verif"><b>Verificar</b> três fotos tiradas sem sinal sobem quando a conexão volta</p>
+          </div></li>
+        </ul>
+        <p class="bloco-pronto"><b>Pronto quando</b> &nbsp;a operação registra uma semana real inteira só no sistema, sem planilha paralela.</p>
+      </div>
+
+      <div class="bloco">
+        <div class="bloco-topo">
+          <span class="bloco-id">Bloco E</span>
+          <span class="bloco-nome">Documentos</span>
+          <span class="bloco-fase">Fase 1</span>
+        </div>
+        <ul class="tarefas">
+          <li class="tarefa"><span class="id">E1</span><div class="corpo">
+            <p class="oque">PDF do relatório técnico de execução</p>
+            <p class="verif"><b>Verificar</b> conferência campo a campo contra a estrutura levantada nos relatórios reais</p>
+          </div></li>
+          <li class="tarefa"><span class="id">E2</span><div class="corpo">
+            <p class="oque">PDF do relatório comercial</p>
+            <p class="verif"><b>Verificar</b> 52,4 ha × R$ 140,00 resulta em R$ 7.336,00, com valor por extenso</p>
+          </div></li>
+          <li class="tarefa"><span class="id">E3</span><div class="corpo">
+            <p class="oque">Rodapé com dados de registro da organização</p>
+            <p class="verif"><b>Verificar</b> CNPJ e CAAR presentes em ambos os PDFs</p>
+          </div></li>
+          <li class="tarefa"><span class="id">E4</span><div class="corpo">
+            <p class="oque">Ressalvas puxadas da biblioteca de textos</p>
+            <p class="verif"><b>Verificar</b> a carência correta aparece conforme o produto aplicado</p>
+          </div></li>
+        </ul>
+      </div>
+
+      <div class="bloco">
+        <div class="bloco-topo">
+          <span class="bloco-id">Bloco F</span>
+          <span class="bloco-nome">Portal do produtor</span>
+          <span class="bloco-fase">Fase 2 · ≈ 4 semanas</span>
+        </div>
+        <ul class="tarefas">
+          <li class="tarefa"><span class="id">F1</span><div class="corpo">
+            <p class="oque">Papel produtor com isolamento em nível de linha</p>
+            <p class="verif"><b>Verificar</b> teste automatizado confirma que o produtor A não acessa nenhuma aplicação das fazendas de B</p>
+          </div></li>
+          <li class="tarefa"><span class="id">F2</span><div class="corpo">
+            <p class="oque">Portar o portal como acesso separado</p>
+            <p class="verif"><b>Verificar</b> produtor entra, vê o histórico da fazenda dele e baixa o PDF</p>
+          </div></li>
+          <li class="tarefa"><span class="id">F3</span><div class="corpo">
+            <p class="oque">Aviso automático ao concluir a aplicação</p>
+            <p class="verif"><b>Verificar</b> ao mudar a OS para concluída, a mensagem chega ao contato do produtor</p>
+          </div></li>
+        </ul>
+      </div>
+
+      <h3><span class="n">8.1</span><span>Fora do MVP, por decisão</span></h3>
+      <div class="tabela-rolagem">
+        <table>
+          <thead><tr><th>Item</th><th>Motivo do adiamento</th></tr></thead>
+          <tbody>
+            <tr><td>Mapa e georreferenciamento</td><td>Parte mais cara de construir e a de menor impacto operacional inicial. A área do talhão digitada resolve por meses</td></tr>
+            <tr><td>Integração com o drone</td><td>Depende de terceiro e de cronograma que não controlamos. Não pode estar no caminho crítico</td></tr>
+            <tr><td>Painel executivo</td><td>Painel sem histórico acumulado é tela vazia</td></tr>
+            <tr><td>Telemetria ao vivo</td><td>Depende da integração e de conectividade em campo. Impressiona em demonstração, pouco usada no dia a dia</td></tr>
+            <tr><td>Aplicativo em loja</td><td>PWA resolve até surgir exigência real de hardware</td></tr>
+            <tr><td>Financeiro completo</td><td>Contas a receber e conciliação ficam para depois. O cálculo <code>área × R$/ha</code> está no MVP porque aparece nos relatórios reais</td></tr>
+            <tr><td>Cobrança e modelo SaaS</td><td>Só quando houver um segundo cliente pagante</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="s9">
+      <h2><span class="n">9</span><span>Bloqueios<a class="anchor" href="#s9">#</a></span></h2>
+      <p>Questões em aberto e a tarefa exata que cada uma trava.</p>
+      <div class="tabela-rolagem">
+        <table>
+          <thead><tr><th>Questão</th><th>Trava</th><th>Se ficar sem resposta</th></tr></thead>
+          <tbody>
+            <tr><td>Há sinal nas fazendas onde a operação atua?</td><td><code>D6</code></td><td>Construir offline mesmo assim — é a suposição segura</td></tr>
+            <tr><td>Quais campos do relatório são exigência legal e quais são praxe?</td><td><code>E1</code></td><td>E1 fica em rascunho até a conversa com o responsável técnico</td></tr>
+            <tr><td>Os relatórios de referência são do cliente ou do mercado?</td><td><code>E1</code>, <code>E2</code></td><td>Usar a estrutura levantada como base e ajustar depois</td></tr>
+            <tr><td>Voo automático e manual têm preços diferentes?</td><td><code>D2</code>, <code>E2</code></td><td>Modelar com preço único e campo preparado para dois</td></tr>
+            <tr><td>O sistema será vendido a outras empresas?</td><td>nenhuma</td><td><code>organizacao_id</code> já cobre os dois cenários</td></tr>
+            <tr><td>Nome oficial do produto</td><td><code>A1</code></td><td>Trava real: define repositório, domínio e nome do pacote</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section id="s10">
+      <h2><span class="n">10</span><span>Critérios de conclusão<a class="anchor" href="#s10">#</a></span></h2>
+      <p>Como saber que o porte foi feito corretamente, independentemente das funcionalidades entregues:</p>
+      <ul class="checklist">
+        <li>Nenhum dado de tela escrito dentro de componente — tudo vem do banco</li>
+        <li>Toda rota exige sessão e respeita o papel do usuário</li>
+        <li>Nenhuma consulta depende de filtro por organização escrito à mão</li>
+        <li>A tela do operador funciona offline do início ao fim</li>
+        <li>Os três documentos saem do mesmo registro, sem redigitação</li>
+        <li>Nenhuma requisição a domínio externo no carregamento da página</li>
+        <li>Verificação de tipos e análise estática passam limpas</li>
+      </ul>
+    </section>
+
+    <footer>
+      Major Hub · Documento técnico de desenvolvimento — DroneAgro · Versão 1.0 · 11 de agosto de 2026
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var secoes = Array.prototype.slice.call(document.querySelectorAll('main section[id]'));
+    var links = {};
+    document.querySelectorAll('.indice a').forEach(function (a) {
+      links[a.getAttribute('href').slice(1)] = a;
+    });
+    if (!secoes.length || !('IntersectionObserver' in window)) return;
+
+    var visiveis = new Set();
+    var obs = new IntersectionObserver(function (entradas) {
+      entradas.forEach(function (e) {
+        if (e.isIntersecting) visiveis.add(e.target.id);
+        else visiveis.delete(e.target.id);
+      });
+      var atual = secoes.filter(function (s) { return visiveis.has(s.id); })[0];
+      if (!atual) return;
+      Object.keys(links).forEach(function (id) {
+        links[id].classList.toggle('ativo', id === atual.id);
+      });
+    }, { rootMargin: '0px 0px -70% 0px', threshold: 0 });
+
+    secoes.forEach(function (s) { obs.observe(s); });
+  })();
+</script>

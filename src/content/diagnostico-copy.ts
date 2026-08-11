@@ -23,7 +23,7 @@ export const diagnosticoCopy = {
     texto:
       'Hoje as pessoas perguntam direto pra IA — e ela responde com uma indicação, não com uma lista de links. Se o seu site não está preparado pra ser lido por essas ferramentas, você simplesmente não entra na conversa.',
     lista: ['ChatGPT', 'Google AI', 'Gemini', 'Claude', 'Grok', 'Perplexity', 'Meta AI', 'Copilot'],
-    fechamento: 'A pergunta não é se seus clientes usam IA. É quem a IA indica quando eles usam.',
+    fechamento: 'Seus clientes já usam IA. A pergunta é quem ela indica quando eles perguntam.',
   },
 
   ferramenta: {

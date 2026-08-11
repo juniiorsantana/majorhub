@@ -125,7 +125,7 @@ function GrowthCopy() {
         <span className="inline-block text-[#001a2e] bg-[#00e5ff] px-2 shadow-[4px_4px_0_0_#fff]">
           aumentando o investimento.
         </span>{' '}
-        Mas o crescimento real vem da estrutura por trás disso.
+        O crescimento real vem da estrutura por trás disso.
       </h2>
     </>
   )
