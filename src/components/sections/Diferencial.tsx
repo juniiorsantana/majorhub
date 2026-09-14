@@ -12,7 +12,7 @@ function LightCard({ children, className }: { children: React.ReactNode; classNa
       whileTap={{ y: -3, scale: 1.01 }}
       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
       className={clsx(
-        'p-8 rounded-2xl cursor-pointer',
+        'p-6 md:p-8 rounded-2xl',
         'bg-white border border-[#e2e8f0]',
         'hover:border-[rgba(8,145,178,0.45)]',
         'shadow-[0_2px_16px_-4px_rgba(0,0,0,0.08)]',
@@ -28,7 +28,7 @@ function LightCard({ children, className }: { children: React.ReactNode; classNa
 
 export function Diferencial() {
   return (
-    <section id="diferencial" className="relative py-24 px-6 overflow-hidden bg-[#f8fafc]">
+    <section id="diferencial" className="relative py-16 md:py-20 px-6 overflow-hidden bg-[#f8fafc]">
 
       {/* Subtle dot pattern */}
       <div
@@ -41,7 +41,7 @@ export function Diferencial() {
 
       <div className="relative z-10 max-w-7xl mx-auto">
 
-        <div className="max-w-3xl mx-auto text-center mb-16 space-y-6">
+        <div className="max-w-3xl mx-auto text-center mb-10 space-y-5">
           <SectionTitle
             type="chars"
             className="font-sora font-extrabold text-[clamp(32px,5vw,56px)] text-[#0a1628]"
@@ -55,7 +55,7 @@ export function Diferencial() {
           </RevealWrapper>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {copy.diferencial.items.map((item, i) => (
             <RevealWrapper key={i} delay={i * 0.1} direction="left">
               <LightCard className="h-full">

@@ -1,0 +1,64 @@
+.section {
+  position: relative;
+  background: #001a2e;
+  border-block: 1px solid rgba(0, 229, 255, 0.35);
+}
+
+.stage {
+  display: grid;
+  gap: 2rem;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding: 5rem 1.5rem;
+}
+
+.copy,
+.cards {
+  min-width: 0;
+}
+
+.copy {
+  align-self: center;
+}
+
+.cards {
+  display: grid;
+  gap: 1.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.card {
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .stage {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 3rem;
+    padding-inline: 3rem;
+  }
+
+  .section[data-stacked='true'] .stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  .section[data-stacked='true'] .cards {
+    position: relative;
+    height: 100%;
+    display: block;
+  }
+
+  .section[data-stacked='true'] .card {
+    position: absolute;
+    inset: 0 0 auto;
+    will-change: transform;
+  }
+}

@@ -65,7 +65,7 @@ export function Hero() {
     <div className="relative w-full bg-[#030712]">
       <section 
         ref={sectionRef}
-        className="relative h-screen min-h-screen flex items-center justify-center overflow-hidden isolation-isolate bg-[#030712]"
+        className="relative min-h-svh flex items-center justify-center overflow-hidden isolation-isolate bg-[#030712]"
       >
         <video
           ref={videoRef}
@@ -82,9 +82,9 @@ export function Hero() {
         {/* Fade inferior — assenta a borda do vídeo antes da próxima seção */}
         <div className="absolute bottom-0 left-0 right-0 h-32 z-[1] bg-gradient-to-b from-transparent to-[#030712]"></div>
 
-        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 flex flex-col items-center justify-center h-full py-20 pt-28 lg:pt-24 text-center">
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 flex flex-col items-center justify-center pb-32 pt-28 lg:pt-32 text-center">
           
-          <div className="flex flex-col items-center gap-10 max-w-[900px]">
+          <div className="flex w-full min-w-0 flex-col items-center gap-7 sm:gap-10 max-w-[900px]">
             <motion.h1
               variants={container}
               initial="hidden"
@@ -133,7 +133,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.7, ease: [0.4, 0, 0.2, 1] }}
-              className="flex justify-center mt-4"
+              className="flex max-w-full justify-center mt-4"
             >
               <BrilhoButton
                 href={WHATSAPP_URL}

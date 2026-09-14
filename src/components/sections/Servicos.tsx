@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { copy } from '@/content/copy'
 
@@ -125,7 +125,7 @@ function ServicoCard({ servico, index, accent, onClick }: {
 
       {/* Body */}
       <div
-        className="relative z-20 h-full rounded-2xl p-8 flex flex-col"
+        className="relative z-20 h-full min-w-0 rounded-2xl p-6 xl:p-8 flex flex-col"
         style={{
           background: 'linear-gradient(135deg, rgba(10,37,64,0.95) 0%, rgba(0,26,46,0.98) 100%)',
           border: '1px solid rgba(255,255,255,0.05)',
@@ -155,7 +155,7 @@ function ServicoCard({ servico, index, accent, onClick }: {
         </p>
 
         <div
-          className="mt-6 pt-5 flex justify-between items-center"
+          className="mt-6 pt-5 flex flex-wrap gap-3 justify-between items-center"
           style={{ borderTop: `1px solid ${accent.ring}` }}
         >
           <span
@@ -184,20 +184,29 @@ function ServicoModal({ servico, accent, onClose }: {
   accent: typeof ACCENTS[0]
   onClose: () => void
 }) {
-  // Lock page scroll (native) while modal is open + fechar com ESC
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  // O dialog nativo mantém o foco no painel e torna o restante da página inerte.
   useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKeyDown)
+    dialog.showModal()
     return () => {
+      dialog.close()
       document.body.style.overflow = prev
-      document.removeEventListener('keydown', onKeyDown)
     }
-  }, [onClose])
+  }, [])
 
   return (
-    <>
+    <dialog
+      ref={dialogRef}
+      aria-label={servico.titulo}
+      onCancel={event => { event.preventDefault(); onClose() }}
+      className="fixed inset-0 m-0 h-dvh w-screen max-h-none max-w-none overflow-hidden border-0 bg-transparent p-0 text-inherit"
+      data-lenis-prevent
+    >
       {/* Backdrop */}
       <motion.div
         className="fixed inset-0 bg-black/75 z-40 backdrop-blur-sm"
@@ -212,12 +221,9 @@ function ServicoModal({ servico, accent, onClose }: {
         {/* Panel — pointer-events-auto re-enables interaction */}
         <motion.div
           layoutId={servico.id}
-          role="dialog"
-          aria-modal="true"
-          aria-label={servico.titulo}
           className="relative w-full max-w-xl rounded-2xl pointer-events-auto"
           style={{
-            maxHeight: '85vh',
+            maxHeight: '85dvh',
             overflowY: 'auto',
             // data-lenis-prevent stops Lenis from hijacking scroll inside the panel
             background: 'linear-gradient(135deg, rgba(8,8,22,0.98) 0%, rgba(10,37,64,0.99) 100%)',
@@ -248,7 +254,7 @@ function ServicoModal({ servico, accent, onClose }: {
 
           <div className="relative z-10 p-6 md:p-8">
             {/* Header: icon + title + close */}
-            <div className="flex items-start gap-4 mb-5">
+            <div className="flex items-start gap-3 md:gap-4 mb-5">
               <div
                 className="text-3xl w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
                 style={{ background: accent.ring, border: `1px solid ${accent.border}40` }}
@@ -258,7 +264,7 @@ function ServicoModal({ servico, accent, onClose }: {
               <div className="flex-1 min-w-0">
                 <motion.h3
                   layoutId={`${servico.id}-title`}
-                  className="font-sora font-black text-xl md:text-2xl text-text-primary leading-tight"
+                  className="font-sora font-black text-lg sm:text-xl md:text-2xl text-text-primary leading-tight"
                 >
                   {servico.titulo}
                 </motion.h3>
@@ -276,7 +282,7 @@ function ServicoModal({ servico, accent, onClose }: {
               <button
                 onClick={onClose}
                 autoFocus
-                className="shrink-0 text-text-meta hover:text-text-primary transition-colors text-lg leading-none -mt-1 -mr-1 p-2 rounded-lg hover:bg-white/5"
+                className="shrink-0 flex min-h-11 min-w-11 items-center justify-center text-text-meta hover:text-text-primary transition-colors text-lg leading-none -mt-1 -mr-1 p-2 rounded-lg hover:bg-white/5"
                 aria-label="Fechar detalhes do serviço"
               >
                 ✕
@@ -344,13 +350,14 @@ function ServicoModal({ servico, accent, onClose }: {
           </div>
         </motion.div>
       </div>
-    </>
+    </dialog>
   )
 }
 
 // ─── Section ───────────────────────────────────────────────────────────────────
 export function Servicos() {
   const [selected, setSelected] = useState<string | null>(null)
+  const closeModal = useCallback(() => setSelected(null), [])
   const activeIdx = copy.servicos.findIndex(s => s.id === selected)
   const activeServico = activeIdx >= 0 ? copy.servicos[activeIdx] : null
   const activeAccent = activeIdx >= 0 ? ACCENTS[activeIdx] : ACCENTS[0]
@@ -368,12 +375,12 @@ export function Servicos() {
         }
       `}</style>
 
-      <section id="servicos" className="relative py-28 px-6 overflow-hidden">
+      <section id="servicos" className="relative py-20 md:py-24 px-6 overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto">
 
           {/* Headline */}
           <motion.div
-            className="text-center mb-20"
+            className="text-center mb-12"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -383,13 +390,15 @@ export function Servicos() {
               Serviços
             </p>
             <h2 className="font-sora font-extrabold text-[clamp(28px,4.5vw,52px)] text-text-primary leading-[1.15] max-w-2xl mx-auto">
-              Crescer não depende de mais esforço.{' '}
-              <span className="text-text-secondary">Depende de estrutura.</span>
+              Escolha por onde começar.
             </h2>
+            <p className="mt-5 max-w-xl mx-auto text-text-secondary leading-relaxed">
+              Comercial, site ou identidade visual. Cada serviço pode ser contratado separadamente.
+            </p>
           </motion.div>
 
           {/* Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {copy.servicos.map((servico, i) => (
               <ServicoCard
                 key={servico.id}
@@ -408,7 +417,7 @@ export function Servicos() {
             <ServicoModal
               servico={activeServico}
               accent={activeAccent}
-              onClose={() => setSelected(null)}
+              onClose={closeModal}
             />
           )}
         </AnimatePresence>

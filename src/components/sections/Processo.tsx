@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import { copy } from '@/content/copy'
-
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -12,145 +11,119 @@ export function Processo() {
   const lineFillRef = useRef<HTMLDivElement>(null)
   const glowDotRef = useRef<HTMLDivElement>(null)
   const lineTrackRef = useRef<HTMLDivElement>(null)
-  const stepsWrapRef = useRef<HTMLDivElement>(null)
-  const stepRefs = useRef<(HTMLDivElement | null)[]>([])
-  const dotDesktopRefs = useRef<(HTMLDivElement | null)[]>([])
-  const dotMobileRefs = useRef<(HTMLDivElement | null)[]>([])
+  const stepsWrapRef = useRef<HTMLOListElement>(null)
+  const stepRefs = useRef<(HTMLLIElement | null)[]>([])
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const dotRefs = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
-    const el = containerRef.current
+    const container = containerRef.current
     const wrap = stepsWrapRef.current
-    if (!el || !wrap) return
+    const track = lineTrackRef.current
+    const fill = lineFillRef.current
+    const glow = glowDotRef.current
+    if (!container || !wrap || !track || !fill || !glow) return
 
-    const allDots = dotDesktopRefs.current.filter(Boolean) as HTMLDivElement[]
-    const allSteps = stepRefs.current.filter(Boolean) as HTMLDivElement[]
-    const total = allDots.length
-    if (total === 0) return
+    const steps = stepRefs.current.filter(Boolean) as HTMLLIElement[]
+    const dots = dotRefs.current.filter(Boolean) as HTMLDivElement[]
+    if (!steps.length || !dots.length) return
 
-    // ── Estado inicial da linha ──────────────────────────────────────────
-    if (lineFillRef.current) gsap.set(lineFillRef.current, { scaleY: 0, transformOrigin: 'top center' })
-    if (glowDotRef.current) gsap.set(glowDotRef.current, { y: 0 })
+    const media = gsap.matchMedia()
+    media.add({
+      desktop: '(min-width: 768px)',
+      mobile: '(max-width: 767px)',
+      reducedMotion: '(prefers-reduced-motion: reduce)',
+    }, context => {
+      const { desktop, reducedMotion } = context.conditions!
 
-    // ── Animação de entrada dos cards e dots ─────────────────────────────
-    allSteps.forEach((stepEl, i) => {
-      const isEven = i % 2 === 0
-
-      gsap.from(stepEl, {
-        opacity: 0, x: isEven ? 50 : -50,
-        ease: 'power3.out', duration: 0.65,
-        scrollTrigger: { trigger: stepEl, start: 'top 85%', toggleActions: 'play none none reverse' },
-      })
-
-      const dot = allDots[i]
-      if (dot) {
-        gsap.from(dot, {
-          scale: 0, opacity: 0,
-          ease: 'back.out(2.5)', duration: 0.45,
-          scrollTrigger: { trigger: stepEl, start: 'top 83%', toggleActions: 'play none none reverse' },
+      // Measure stable dot containers, outside the animated card content.
+      const measureTrack = () => {
+        const wrapTop = wrap.getBoundingClientRect().top
+        const firstDot = dots[0].getBoundingClientRect()
+        const lastDot = dots[dots.length - 1].getBoundingClientRect()
+        const firstCenter = firstDot.top - wrapTop + firstDot.height / 2
+        const lastCenter = lastDot.top - wrapTop + lastDot.height / 2
+        gsap.set(track, {
+          top: firstCenter,
+          bottom: 'auto',
+          height: Math.max(0, lastCenter - firstCenter),
         })
       }
+      measureTrack()
+      ScrollTrigger.addEventListener('refreshInit', measureTrack)
 
-      const mobileDot = dotMobileRefs.current[i]
-      if (mobileDot) {
-        gsap.from(mobileDot, {
-          scale: 0, opacity: 0,
-          ease: 'back.out(2.5)', duration: 0.45,
-          scrollTrigger: { trigger: stepEl, start: 'top 83%', toggleActions: 'play none none reverse' },
+      if (!reducedMotion) {
+        steps.forEach((step, index) => {
+          const card = cardRefs.current[index]
+          const dot = dots[index]?.firstElementChild
+          if (card) {
+            gsap.from(card, {
+              opacity: 0,
+              x: desktop ? (index % 2 === 0 ? 50 : -50) : 0,
+              y: desktop ? 0 : 20,
+              ease: 'power3.out',
+              duration: 0.65,
+              scrollTrigger: {
+                trigger: step,
+                start: 'top 85%',
+                toggleActions: 'play none none reverse',
+              },
+            })
+          }
+          if (dot) {
+            gsap.from(dot, {
+              scale: 0,
+              opacity: 0,
+              ease: 'back.out(2.5)',
+              duration: 0.45,
+              scrollTrigger: {
+                trigger: step,
+                start: 'top 83%',
+                toggleActions: 'play none none reverse',
+              },
+            })
+          }
         })
-      }
-    })
-
-    // ── Refresh antes de calcular posições ───────────────────────────────
-    // correção: ScrollTrigger.refresh() ANTES de medir os dots garante que
-    // o layout final está calculado. Depois usamos requestAnimationFrame
-    // para aguardar um frame extra e só então medir — evitando posições
-    // capturadas antes do browser finalizar o paint.
-    ScrollTrigger.refresh()
-
-    requestAnimationFrame(() => {
-      // correção: medimos a posição de cada dot relativo ao lineTrackRef
-      // (não ao stepsWrap), porque o trilho já tem top:8px aplicado —
-      // isso elimina o offset que fazia a bolinha ficar entre os pontos.
-      const track = lineTrackRef.current
-      if (!track) return
-
-      const trackTop = track.getBoundingClientRect().top
-
-      // Posição Y de cada dot relativa ao topo do trilho
-      const dotPositions = allDots.map(dot => {
-        const dotRect = dot.getBoundingClientRect()
-        // centro do dot relativo ao topo do trilho
-        return dotRect.top - trackTop + dotRect.height / 2
-      })
-
-
-      // correção: trackHeight é a altura REAL do elemento trilho (offsetHeight).
-      // scaleY vai de 0→1 sobre essa altura. Se normalizarmos por totalTravel
-      // (distância entre dots em px), o scaleY fica errado porque o trilho
-      // tem top:8 e bottom:8 — sua altura é menor que totalTravel.
-      // Dividindo por trackHeight, linha e bolinha ficam perfeitamente em sincronia.
-      const trackHeight = track.offsetHeight
-
-      allSteps.forEach((stepEl, i) => {
-        const prevPos = i === 0 ? dotPositions[0] : dotPositions[i - 1]
-        const currPos = dotPositions[i]
-
-        // correção: scaleY normalizado por trackHeight, não por totalTravel
-        const prevScale = total > 1 ? prevPos / trackHeight : 0
-        const currScale = total > 1 ? currPos / trackHeight : 1
-
-        ScrollTrigger.create({
-          trigger: stepEl,
-          start: 'top 65%',
-          end: 'center 50%',
-          scrub: 1.5,
-          onUpdate(self) {
-            const p = self.progress
-            // linha cresce proporcionalmente à altura real do trilho
-            const newScaleY = prevScale + (currScale - prevScale) * p
-            // bolinha move em px — mesma escala dos dotPositions (relativo ao topo do trilho)
-            const newDotY = prevPos + (currPos - prevPos) * p
-
-            if (lineFillRef.current) gsap.set(lineFillRef.current, { scaleY: newScaleY })
-            if (glowDotRef.current) gsap.set(glowDotRef.current, { y: newDotY })
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: steps[0],
+            start: 'center 65%',
+            endTrigger: steps[steps.length - 1],
+            end: 'center 50%',
+            scrub: 1.5,
+            invalidateOnRefresh: true,
           },
         })
-      })
-    })
+          .fromTo(fill, { scaleY: 0 }, { scaleY: 1, ease: 'none' }, 0)
+          .fromTo(glow, { y: 0 }, { y: () => track.offsetHeight, ease: 'none' }, 0)
+      }
 
-    // O layout da página muda depois do mount (imagens lazy, fontes, hidratação),
-    // deixando as posições dos ScrollTriggers desatualizadas — os cards ficavam
-    // presos em opacity:0. Refaz o refresh quando a altura do documento mudar.
-    let refreshTimer: ReturnType<typeof setTimeout>
-    const bodyObserver = new ResizeObserver(() => {
-      clearTimeout(refreshTimer)
-      refreshTimer = setTimeout(() => ScrollTrigger.refresh(), 200)
-    })
-    bodyObserver.observe(document.body)
+      // Fonts, images and viewport changes can move the section after mount.
+      let refreshTimer: ReturnType<typeof setTimeout> | undefined
+      const scheduleRefresh = () => {
+        clearTimeout(refreshTimer)
+        refreshTimer = setTimeout(() => ScrollTrigger.refresh(), 180)
+      }
+      const resizeObserver = new ResizeObserver(scheduleRefresh)
+      resizeObserver.observe(document.body)
+      resizeObserver.observe(wrap)
+      window.addEventListener('load', scheduleRefresh)
 
-    const onLoad = () => ScrollTrigger.refresh()
-    if (document.readyState !== 'complete') {
-      window.addEventListener('load', onLoad, { once: true })
-    }
+      return () => {
+        clearTimeout(refreshTimer)
+        resizeObserver.disconnect()
+        window.removeEventListener('load', scheduleRefresh)
+        ScrollTrigger.removeEventListener('refreshInit', measureTrack)
+      }
+    }, container)
 
-    return () => {
-      clearTimeout(refreshTimer)
-      bodyObserver.disconnect()
-      window.removeEventListener('load', onLoad)
-      ScrollTrigger.getAll().forEach(t => t.kill())
-    }
+    return () => media.revert()
   }, [])
 
   return (
-    <section id="processo" className="relative py-24 px-6 bg-[#001a2e] overflow-hidden">
-
-
-
+    <section id="processo" aria-labelledby="processo-title" className="relative py-16 md:py-20 px-6 bg-[#001a2e] overflow-hidden">
       <div className="relative z-10 max-w-5xl mx-auto" ref={containerRef}>
-
-        {/* correção: título escrito diretamente em JSX, sem depender de
-            SectionTitle ou copy externo que podem estar retornando vazio */}
-        <div className="text-center mb-20">
+        <div className="text-center mb-12">
           <p
             className="inline-block font-mono text-[11px] tracking-[3px] uppercase mb-5 px-3 py-1"
             style={{ background: '#00e5ff', color: '#001a2e', fontWeight: 900 }}
@@ -158,6 +131,7 @@ export function Processo() {
             Como funciona
           </p>
           <h2
+            id="processo-title"
             className="font-sora font-extrabold text-white"
             style={{ fontSize: 'clamp(32px, 4vw, 48px)', lineHeight: 1.1 }}
           >
@@ -166,10 +140,9 @@ export function Processo() {
         </div>
 
         <div className="relative">
-
-          {/* Trilho */}
           <div
-            className="hidden md:block absolute left-1/2 -translate-x-1/2 pointer-events-none"
+            aria-hidden="true"
+            className="absolute left-2.5 md:left-1/2 -translate-x-1/2 pointer-events-none"
             ref={lineTrackRef}
             style={{ top: 8, bottom: 8, width: 1, zIndex: 5 }}
           >
@@ -182,16 +155,10 @@ export function Processo() {
                 boxShadow: '0 0 10px 1px rgba(0,229,255,0.5)',
               }}
             />
-            {/* correção: glowDot posicionado com top:0 relativo ao trilho.
-                O useEffect define y=dotPositions[0] após o refresh, alinhando
-                a bolinha exatamente ao centro do primeiro dot. */}
             <div
               ref={glowDotRef}
+              className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 motion-reduce:hidden"
               style={{
-                position: 'absolute',
-                top: 0,
-                left: '50%',
-                transform: 'translateX(-50%) translateY(-50%)',
                 width: 14,
                 height: 14,
                 borderRadius: '50%',
@@ -202,54 +169,41 @@ export function Processo() {
             />
           </div>
 
-          <div ref={stepsWrapRef} className="space-y-16 md:space-y-20">
-            {copy.processo.etapas.map((etapa, i) => {
-              const isEven = i % 2 === 0
+          <ol ref={stepsWrapRef} role="list" className="relative space-y-8 md:space-y-10">
+            {copy.processo.etapas.map((etapa, index) => {
+              const isEven = index % 2 === 0
               return (
-                <div
-                  key={i}
-                  ref={el => { stepRefs.current[i] = el }}
-                  className="relative flex items-center"
+                <li
+                  key={etapa.num}
+                  ref={element => { stepRefs.current[index] = element }}
+                  className="relative grid grid-cols-[20px_minmax(0,1fr)] gap-x-4 items-center md:grid-cols-[minmax(0,1fr)_56px_minmax(0,1fr)] md:gap-x-0"
                 >
-                  <div className="hidden md:flex w-[calc(50%-28px)] justify-end pr-10">
-                    {!isEven && <StepCard etapa={etapa} side="right" />}
-                  </div>
-
-                  <div className="hidden md:flex flex-shrink-0 items-center justify-center" style={{ width: 56 }}>
-                    <div
-                      ref={el => { dotDesktopRefs.current[i] = el }}
-                      className="relative flex items-center justify-center"
-                      style={{ width: 20, height: 20 }}
-                    >
-                      <span className="absolute animate-ping rounded-full"
-                        style={{ width: 28, height: 28, background: 'rgba(0,229,255,0.25)' }} />
-                      <span className="relative z-10 rounded-full"
-                        style={{ width: 16, height: 16, background: '#001a2e', border: '2.5px solid #00e5ff', boxShadow: '0 0 14px rgba(0,229,255,0.8)' }} />
-                    </div>
-                  </div>
-
-                  <div className="hidden md:flex w-[calc(50%-28px)] justify-start pl-10">
-                    {isEven && <StepCard etapa={etapa} side="left" />}
-                  </div>
-
-                  {/* Mobile */}
-                  <div className="flex md:hidden w-full gap-5 items-start">
-                    <div className="flex flex-col items-center flex-shrink-0 pt-1" style={{ width: 20 }}>
-                      <div
-                        ref={el => { dotMobileRefs.current[i] = el }}
-                        className="relative z-10 rounded-full flex-shrink-0"
-                        style={{ width: 16, height: 16, background: '#001a2e', border: '2.5px solid #00e5ff', boxShadow: '0 0 10px rgba(0,229,255,0.7)' }}
+                  <div
+                    ref={element => { dotRefs.current[index] = element }}
+                    aria-hidden="true"
+                    className="relative col-start-1 row-start-1 mt-7 self-start justify-self-center flex h-5 w-5 items-center justify-center md:col-start-2 md:mt-0 md:self-center"
+                  >
+                    <div className="relative flex h-5 w-5 items-center justify-center">
+                      <span
+                        className="absolute motion-safe:animate-ping rounded-full"
+                        style={{ width: 28, height: 28, background: 'rgba(0,229,255,0.25)' }}
                       />
-                      {i < copy.processo.etapas.length - 1 && (
-                        <div className="flex-1 mt-2" style={{ width: 1, minHeight: 60, background: 'rgba(0,229,255,0.2)' }} />
-                      )}
+                      <span
+                        className="relative z-10 rounded-full"
+                        style={{ width: 16, height: 16, background: '#001a2e', border: '2.5px solid #00e5ff', boxShadow: '0 0 14px rgba(0,229,255,0.8)' }}
+                      />
                     </div>
-                    <StepCard etapa={etapa} side="left" className="flex-1" />
                   </div>
-                </div>
+                  <div
+                    ref={element => { cardRefs.current[index] = element }}
+                    className={`col-start-2 row-start-1 min-w-0 ${isEven ? 'md:col-start-3 md:pl-10' : 'md:col-start-1 md:pr-10'}`}
+                  >
+                    <StepCard etapa={etapa} side={isEven ? 'left' : 'right'} />
+                  </div>
+                </li>
               )
             })}
-          </div>
+          </ol>
         </div>
       </div>
     </section>
@@ -259,27 +213,28 @@ export function Processo() {
 interface StepCardProps {
   etapa: { num: string; titulo: string; texto: string; prazo?: string }
   side: 'left' | 'right'
-  className?: string
 }
 
-function StepCard({ etapa, side, className = '' }: StepCardProps) {
+function StepCard({ etapa, side }: StepCardProps) {
   const isRight = side === 'right'
   return (
     <div
-      className={`relative overflow-hidden rounded-xl p-7 w-full max-w-md ${className}`}
+      className={`relative overflow-hidden rounded-xl p-5 sm:p-7 w-full text-left ${isRight ? 'md:text-right' : ''}`}
       style={{
-        background: 'rgba(10, 37, 64, 0.88)', backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(0,229,255,0.12)', boxShadow: '0 8px 40px -8px rgba(0,0,0,0.6)',
-        textAlign: isRight ? 'right' : 'left',
+        background: 'rgba(10, 37, 64, 0.88)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(0,229,255,0.12)',
+        boxShadow: '0 8px 40px -8px rgba(0,0,0,0.6)',
       }}
     >
-      <span className="absolute font-black text-[#00e5ff] select-none pointer-events-none leading-none"
-        style={{
-          fontSize: 'clamp(5rem,12vw,8rem)', opacity: 0.04, top: '-0.15em',
-          right: isRight ? 'unset' : '-0.05em', left: isRight ? '-0.05em' : 'unset'
-        }}
-        aria-hidden="true">{etapa.num}</span>
-      <div className={`flex items-center gap-3 mb-2 ${isRight ? 'flex-row-reverse' : ''}`}>
+      <span
+        className={`absolute font-black text-[#00e5ff] select-none pointer-events-none leading-none right-[-0.05em] ${isRight ? 'md:right-auto md:left-[-0.05em]' : ''}`}
+        style={{ fontSize: 'clamp(5rem,12vw,8rem)', opacity: 0.04, top: '-0.15em' }}
+        aria-hidden="true"
+      >
+        {etapa.num}
+      </span>
+      <div className={`flex flex-wrap items-center gap-3 mb-2 ${isRight ? 'md:flex-row-reverse' : ''}`}>
         <span className="font-sora font-bold text-base block" style={{ color: '#00e5ff' }}>{etapa.num}</span>
         {etapa.prazo && (
           <span
@@ -290,13 +245,11 @@ function StepCard({ etapa, side, className = '' }: StepCardProps) {
           </span>
         )}
       </div>
-      <h3 className="font-sora font-bold text-2xl text-white mb-3 leading-tight">{etapa.titulo}</h3>
+      <h3 className="font-sora font-bold text-xl sm:text-2xl text-white mb-3 leading-tight">{etapa.titulo}</h3>
       <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.58)' }}>{etapa.texto}</p>
       <div className="absolute bottom-0 left-0 right-0" style={{
         height: 2,
-        background: isRight
-          ? 'linear-gradient(to left, transparent, rgba(0,229,255,0.4), transparent)'
-          : 'linear-gradient(to right, transparent, rgba(0,229,255,0.4), transparent)'
+        background: 'linear-gradient(to right, transparent, rgba(0,229,255,0.4), transparent)',
       }} />
     </div>
   )
