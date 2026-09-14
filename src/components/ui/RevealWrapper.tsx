@@ -1,5 +1,5 @@
 'use client'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 
 type Direction = 'up' | 'left' | 'right'
 
@@ -22,9 +22,10 @@ export function RevealWrapper({
   delay = 0,
   className,
 }: RevealWrapperProps) {
+  const reducedMotion = useReducedMotion()
   return (
     <motion.div
-      initial="hidden"
+      initial={reducedMotion ? false : 'hidden'}
       whileInView="visible"
       viewport={{ once: true, margin: '-40px' }}
       variants={variants[direction]}

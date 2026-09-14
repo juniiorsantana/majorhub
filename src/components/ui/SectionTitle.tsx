@@ -1,5 +1,5 @@
 'use client'
-import { motion, Variants } from 'framer-motion'
+import { motion, useReducedMotion, Variants } from 'framer-motion'
 import React from 'react'
 
 interface SectionTitleProps {
@@ -9,16 +9,17 @@ interface SectionTitleProps {
 }
 
 export function SectionTitle({ children, className, type = 'chars' }: SectionTitleProps) {
+  const reducedMotion = useReducedMotion()
   // Extract text if it's a simple ReactNode array or string
   const textContent = Array.isArray(children) 
     ? children.join('') 
     : typeof children === 'string' ? children : null
 
   // If it's not a plain string, fallback to a simple fade up
-  if (!textContent) {
+  if (!textContent || reducedMotion || type === 'lines') {
     return (
       <motion.h2
-        initial={{ opacity: 0, y: 30 }}
+        initial={reducedMotion ? false : { opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-10%' }}
         transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
@@ -50,7 +51,8 @@ export function SectionTitle({ children, className, type = 'chars' }: SectionTit
     },
   }
 
-  const elements = type === 'chars' ? textContent.split('') : textContent.split(' ')
+  // Mantém cada palavra inteira nas quebras, mesmo quando suas letras são animadas.
+  const elements = textContent.split(/(\s+)/)
 
   return (
     <motion.h2
@@ -62,16 +64,21 @@ export function SectionTitle({ children, className, type = 'chars' }: SectionTit
       style={{ perspective: 1000 }}
       aria-label={textContent}
     >
-      {elements.map((el, index) => (
-        <motion.span
-          key={index}
-          variants={child}
-          aria-hidden="true"
-          style={{ display: 'inline-block', whiteSpace: 'pre' }}
-        >
-          {type === 'words' ? `${el} ` : el}
-        </motion.span>
-      ))}
+      <span aria-hidden="true">
+        {elements.map((word, index) => {
+          if (/^\s+$/.test(word)) return word
+          if (type === 'words') {
+            return <motion.span key={index} variants={child} className="inline-block">{word}</motion.span>
+          }
+          return (
+            <span key={index} className="inline-block whitespace-nowrap">
+              {Array.from(word).map((letter, letterIndex) => (
+                <motion.span key={letterIndex} variants={child} className="inline-block">{letter}</motion.span>
+              ))}
+            </span>
+          )
+        })}
+      </span>
     </motion.h2>
   )
 }

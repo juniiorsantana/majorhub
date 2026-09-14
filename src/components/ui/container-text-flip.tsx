@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useId } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "../../lib/utils";
 
 export interface ContainerTextFlipProps {
@@ -25,9 +25,10 @@ export function ContainerTextFlip({
   animationDuration = 700,
 }: ContainerTextFlipProps) {
   const id = useId();
+  const reducedMotion = useReducedMotion();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [width, setWidth] = useState(100);
-  const textRef = React.useRef<HTMLDivElement>(null);
+  const textRef = React.useRef<HTMLSpanElement>(null);
 
   const updateWidthForWord = () => {
     if (textRef.current) {
@@ -40,16 +41,22 @@ export function ContainerTextFlip({
   useEffect(() => {
     // Update width whenever the word changes
     updateWidthForWord();
+    const text = textRef.current;
+    if (!text) return;
+    const observer = new ResizeObserver(updateWidthForWord);
+    observer.observe(text);
+    return () => observer.disconnect();
   }, [currentWordIndex]);
 
   useEffect(() => {
+    if (reducedMotion || words.length < 2) return;
     const intervalId = setInterval(() => {
       setCurrentWordIndex((prevIndex) => (prevIndex + 1) % words.length);
       // Width will be updated in the effect that depends on currentWordIndex
     }, interval);
 
     return () => clearInterval(intervalId);
-  }, [words, interval]);
+  }, [words, interval, reducedMotion]);
 
   return (
     <motion.span
@@ -59,7 +66,7 @@ export function ContainerTextFlip({
       transition={{ duration: animationDuration / 2000 }}
       whileHover={{ scale: 1.05, y: -2 }}
       className={cn(
-        "relative inline-flex items-center justify-center rounded-xl px-2 py-0 text-center font-bold cursor-pointer align-middle",
+        "relative inline-flex max-w-full items-center justify-center rounded-xl px-2 py-0 text-center font-bold align-middle",
         "transition-shadow duration-300",
         // Adaptação para o tema Dark/Cyan da MajorHub sem o "SaaS cliché"
         "bg-white/5 backdrop-blur-sm border border-white/10",
@@ -70,7 +77,7 @@ export function ContainerTextFlip({
       )}
       key={words[currentWordIndex]}
     >
-      <motion.div
+      <motion.span
         transition={{
           duration: animationDuration / 1000,
           ease: "easeInOut",
@@ -79,11 +86,11 @@ export function ContainerTextFlip({
         ref={textRef}
         layoutId={`word-div-${words[currentWordIndex]}-${id}`}
       >
-        <motion.div className="inline-block whitespace-nowrap">
+        <motion.span className="inline-block whitespace-nowrap">
           {words[currentWordIndex].split("").map((letter, index) => (
             <motion.span
               key={index}
-              initial={{
+              initial={reducedMotion ? false : {
                 opacity: 0,
                 filter: "blur(10px)",
                 y: 10,
@@ -101,8 +108,8 @@ export function ContainerTextFlip({
               {letter === " " ? "\u00A0" : letter}
             </motion.span>
           ))}
-        </motion.div>
-      </motion.div>
+        </motion.span>
+      </motion.span>
     </motion.span>
   );
 }
