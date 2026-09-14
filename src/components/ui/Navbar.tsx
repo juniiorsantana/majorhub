@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 const NAV_LINKS = [
@@ -16,6 +16,14 @@ export function Navbar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)')
+    const closeOnDesktop = () => { if (desktop.matches) setOpen(false) }
+    desktop.addEventListener('change', closeOnDesktop)
+    return () => desktop.removeEventListener('change', closeOnDesktop)
+  }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16)
@@ -32,7 +40,12 @@ export function Navbar() {
 
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false)
+        menuButtonRef.current?.focus()
+      }
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
@@ -41,7 +54,12 @@ export function Navbar() {
     !href.startsWith('/#') && (pathname === href || pathname.startsWith(`${href}/`))
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50">
+    <header
+      className="fixed top-0 left-0 right-0 z-50"
+      onBlur={event => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false)
+      }}
+    >
       <nav
         aria-label="Navegação principal"
         className={`flex items-center justify-between px-6 lg:px-12 transition-all duration-300 ${
@@ -64,7 +82,7 @@ export function Navbar() {
         </Link>
 
         {/* Links — desktop */}
-        <div className="hidden md:flex items-center gap-7 lg:gap-8">
+        <div className="hidden lg:flex items-center gap-5 xl:gap-8">
           {NAV_LINKS.map(link => {
             const active = isActive(link.href)
             return (
@@ -95,19 +113,20 @@ export function Navbar() {
           href="https://wa.me/5565992178164"
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden md:inline-flex text-brand-cyan text-sm font-semibold px-4 py-2 rounded-full border border-[rgba(0,229,255,0.35)] bg-[rgba(0,229,255,0.08)] hover:bg-[rgba(0,229,255,0.18)] hover:border-[rgba(0,229,255,0.6)] transition-colors"
+          className="hidden lg:inline-flex min-h-11 items-center text-brand-cyan text-sm font-semibold px-4 py-2 rounded-full border border-[rgba(0,229,255,0.35)] bg-[rgba(0,229,255,0.08)] hover:bg-[rgba(0,229,255,0.18)] hover:border-[rgba(0,229,255,0.6)] transition-colors"
         >
           Falar com a MajorHub →
         </a>
 
         {/* Hambúrguer — mobile */}
         <button
+          ref={menuButtonRef}
           type="button"
           onClick={() => setOpen(v => !v)}
           aria-expanded={open}
           aria-controls="menu-mobile"
           aria-label={open ? 'Fechar menu' : 'Abrir menu'}
-          className="md:hidden relative flex items-center justify-center w-11 h-11 -mr-2 rounded-full text-white"
+          className="lg:hidden relative flex items-center justify-center w-11 h-11 -mr-2 rounded-full text-white"
         >
           <span
             className={`absolute h-[2px] w-5 rounded-full bg-current transition-transform duration-300 ${
@@ -134,7 +153,7 @@ export function Navbar() {
               transition={{ duration: 0.2 }}
               onClick={() => setOpen(false)}
               aria-hidden="true"
-              className="md:hidden fixed inset-0 -z-10 bg-black/50"
+              className="lg:hidden fixed inset-0 -z-10 bg-black/50"
             />
 
             <motion.div
@@ -144,7 +163,8 @@ export function Navbar() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-              className="md:hidden px-6 pt-2 pb-8"
+              className="lg:hidden max-h-[calc(100dvh-68px)] overflow-y-auto overscroll-contain px-6 pt-2 pb-8"
+              data-lenis-prevent
               style={{
                 background: 'rgba(0, 26, 46, 0.97)',
                 backdropFilter: 'blur(14px)',
