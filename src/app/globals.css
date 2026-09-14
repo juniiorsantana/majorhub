@@ -156,6 +156,7 @@ html { scroll-behavior: auto; } /* Lenis assume o scroll */
 /* Container externo — anel de glow */
 .brilho1 {
   width: fit-content;
+  max-width: 100%;
   overflow: visible;
   z-index: 1;
   position: relative;
@@ -228,11 +229,15 @@ html { scroll-behavior: auto; } /* Lenis assume o scroll */
   text-transform: uppercase;
   gap: 8px;
   cursor: pointer;
+  min-height: 44px;
+  text-align: center;
 }
 
 @media (max-width: 767px) {
   .brilho2 .elementor-button {
-    padding: 15px 30px;
+    padding: 15px 20px;
+    font-size: 12px;
+    letter-spacing: 0.025em;
   }
 }
 
@@ -272,6 +277,20 @@ html { scroll-behavior: auto; } /* Lenis assume o scroll */
   font-weight: 700;
 }
 
+.brilho2 .elementor-button-text {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.brilho2 .elementor-button-icon {
+  flex-shrink: 0;
+}
+
+.brilho2:focus-within {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+
 /* ─── Admin ─────────────────────────────────────────── */
 .admin-quick-action {
   display: flex;
@@ -289,4 +308,3 @@ html { scroll-behavior: auto; } /* Lenis assume o scroll */
   background: rgba(0, 153, 255, 0.08);
   border-color: rgba(0, 153, 255, 0.2);
 }
-
