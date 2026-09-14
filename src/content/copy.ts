@@ -23,7 +23,7 @@ export const copy = {
       icon: '📊',
       titulo: 'Estruturação Comercial',
       tag: 'Faturamento imprevisível',
-      resumo: 'Seu comercial não é previsível porque não foi desenhado pra vender.',
+      resumo: 'Organizamos o funil, a qualificação dos leads e a rotina do seu time de vendas.',
       descricao: 'A gente estrutura um sistema onde cada lead entra, avança e fecha — sem depender de sorte ou improviso.',
       cta: 'Ver como funciona →',
       entregas: [
@@ -40,7 +40,7 @@ export const copy = {
       icon: '🚀',
       titulo: 'Site Profissional',
       tag: 'Site que não vende',
-      resumo: 'Se o seu site não vende, ele está te fazendo perder dinheiro todos os dias.',
+      resumo: 'Criamos um site que apresenta sua empresa e facilita o próximo passo do cliente.',
       descricao: 'Criamos páginas que posicionam, geram desejo e convertem — mesmo quando você não está online.',
       cta: 'Ver como funciona →',
       entregas: [
@@ -57,7 +57,7 @@ export const copy = {
       icon: '💎',
       titulo: 'Identidade Visual',
       tag: 'Marca sem autoridade',
-      resumo: 'Se sua marca parece amadora, o cliente negocia. Sempre.',
+      resumo: 'Damos consistência à sua marca, do logotipo aos materiais de venda.',
       descricao: 'Construímos identidades que elevam percepção de valor e fazem você ser levado a sério antes mesmo da conversa.',
       cta: 'Ver como funciona →',
       entregas: [
@@ -71,23 +71,21 @@ export const copy = {
   ],
 
   diferencial: {
-    titulo: 'Um time de marketing inteiro trabalhando pra você, sem contratar ninguém.',
-    texto: 'Somos o cérebro criativo da sua operação. Um time completo — estrategista, designer, desenvolvedor e especialista em vendas — trabalhando como se fosse seu time interno. Você tem um único ponto de contato. A gente resolve o resto.',
+    titulo: 'Especialistas próximos da sua operação.',
+    texto: 'Estratégia, design, desenvolvimento e vendas com um único ponto de contato.',
     items: [
-      { titulo: 'Time sob demanda', texto: 'Acesso a CMO, head de conteúdo, designer, especialista em tráfego e desenvolvedor — sem contratar nenhum deles.' },
-      { titulo: 'Padrão Major em tudo', texto: 'Cada entrega passa pelo nosso filtro de qualidade. Processo documentado, comunicação clara, resultado mensurável.' },
-      { titulo: 'Estratégia antes de execução', texto: 'A execução só começa depois que a estratégia está validada. Sempre.' },
-      { titulo: 'Criatividade com resultado', texto: 'Bonito que não converte é desperdício. Cada decisão criativa tem uma razão estratégica por trás.' },
+      { titulo: 'Time sob demanda', texto: 'Acesso às especialidades que seu projeto precisa, sem ampliar a equipe interna.' },
+      { titulo: 'Processo claro', texto: 'Entregas com revisão de qualidade, processo documentado e comunicação direta.' },
     ],
   },
 
   processo: {
     titulo: 'Nosso Processo',
     etapas: [
-      { num: '01', titulo: 'Diagnóstico', prazo: 'Semana 1', texto: 'Entendemos seu negócio, seu mercado e onde está o gargalo.' },
-      { num: '02', titulo: 'Estratégia', prazo: 'Semana 2', texto: 'Desenhamos o caminho antes de qualquer execução.' },
-      { num: '03', titulo: 'Execução', prazo: 'Semanas 3 a 6', texto: 'Entregamos com prazo, qualidade e o Padrão Major.' },
-      { num: '04', titulo: 'Acompanhamento', prazo: 'Contínuo', texto: 'Monitoramos, ajustamos e garantimos que funciona.' },
+      { num: '01', titulo: 'Diagnóstico', prazo: 'Semana 1', texto: 'Entendemos seu negócio, seu mercado e o principal gargalo.' },
+      { num: '02', titulo: 'Estratégia', prazo: 'Semana 2', texto: 'Definimos as prioridades e o plano de trabalho.' },
+      { num: '03', titulo: 'Execução', prazo: 'Semanas 3 a 6', texto: 'Desenvolvemos as entregas previstas para o projeto.' },
+      { num: '04', titulo: 'Acompanhamento', prazo: 'Contínuo', texto: 'Avaliamos os resultados e ajustamos o que precisa melhorar.' },
     ],
   },
 
@@ -98,7 +96,7 @@ export const copy = {
       {
         pergunta: 'O que exatamente a MajorHub faz?',
         resposta:
-          'A MajorHub estrutura o comercial, constrói sites profissionais e desenvolve a identidade visual de empresas que querem crescer no digital. Funcionamos como um time de marketing completo — estrategista, designer, desenvolvedor e especialista em vendas — sem que você precise contratar ninguém.',
+          'A MajorHub estrutura o comercial, constrói sites profissionais e desenvolve a identidade visual de empresas que querem crescer no digital.',
       },
       {
         pergunta: 'Preciso contratar os três serviços juntos?',
@@ -113,7 +111,7 @@ export const copy = {
       {
         pergunta: 'Como funciona o início do trabalho?',
         resposta:
-          'Começamos com uma conversa gratuita pelo WhatsApp para entender seu negócio. Se fizer sentido para os dois lados, fazemos um diagnóstico completo do seu mercado e do seu gargalo antes de qualquer execução. Estratégia sempre vem antes da execução.',
+          'Começamos com uma conversa gratuita pelo WhatsApp para entender seu negócio. Se fizer sentido para os dois lados, fazemos um diagnóstico completo do seu mercado e do seu gargalo antes de qualquer execução.',
       },
       {
         pergunta: 'A MajorHub atende empresas de qualquer segmento?',
