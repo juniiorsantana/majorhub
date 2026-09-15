@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeSite } from '@/lib/diagnostico/analyze'
 import { montarResultado } from '@/lib/diagnostico/score'
+import { assinarDiagnostico } from '@/lib/diagnostico/assinatura'
+import { resumirDiagnostico } from '@/lib/diagnostico/resumo'
 
 export const maxDuration = 30
 
@@ -58,5 +60,11 @@ export async function POST(req: NextRequest) {
 
   const resultado = montarResultado(url, audit)
 
-  return NextResponse.json(resultado)
+  // A assinatura volta com o formulário do lead e prova que o diagnóstico foi
+  // feito aqui. Sem o segredo configurado o relatório funciona igual; só o
+  // encaminhamento ao Núcleo Major fica desligado.
+  const segredo = process.env.DIAGNOSTICO_SIGNING_SECRET
+  const assinatura = segredo ? assinarDiagnostico(resumirDiagnostico(resultado), segredo) : undefined
+
+  return NextResponse.json({ ...resultado, assinatura })
 }

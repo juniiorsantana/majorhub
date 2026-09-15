@@ -29,6 +29,8 @@ export interface DiagnosticoResultado {
   faixaGeral: Faixa
   categorias: CategoryResult[]
   geradoEm: string
+  /** Prova de que o diagnóstico foi feito pelo servidor; volta com o formulário do lead */
+  assinatura?: string
 }
 
 export interface RobotsAnalise {

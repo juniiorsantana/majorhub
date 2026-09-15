@@ -1,10 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { copy } from '@/content/copy'
 import { diagnosticoCopy } from '@/content/diagnostico-copy'
 import type { DiagnosticoResultado } from '@/lib/diagnostico/types'
 import { bandaDaNota } from '@/lib/diagnostico/score'
+import { recomendarServico } from '@/lib/diagnostico/resumo'
 import { ScoreGauge } from './ScoreGauge'
 import { CategoryScoreCard } from './CategoryScoreCard'
 import { LeadForm } from './LeadForm'
@@ -26,13 +26,6 @@ function buildWhatsappUrl(resultado: DiagnosticoResultado) {
     utm_campaign: 'diagnostico_digital',
   })
   return `https://wa.me/${PHONE}?${params.toString()}`
-}
-
-function recomendarServico(resultado: DiagnosticoResultado) {
-  const disponiveis = resultado.categorias.filter(c => c.disponivel)
-  const pior = disponiveis.sort((a, b) => a.nota - b.nota)[0]
-  const servicoId = pior ? diagnosticoCopy.servicoPorCategoria[pior.id] : 'site'
-  return copy.servicos.find(s => s.id === servicoId) ?? copy.servicos[1]
 }
 
 function extrairDominio(input: string) {
@@ -156,7 +149,12 @@ export function DiagnosticoApp() {
             </div>
 
             {!unlocked && (
-              <LeadForm onUnlock={() => setUnlocked(true)} dominio={resultado.dominio} nota={resultado.notaGeral} />
+              <LeadForm
+                onUnlock={() => setUnlocked(true)}
+                dominio={resultado.dominio}
+                nota={resultado.notaGeral}
+                assinatura={resultado.assinatura}
+              />
             )}
 
             {unlocked && servicoRecomendado && (

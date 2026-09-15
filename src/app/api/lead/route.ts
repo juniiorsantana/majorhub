@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { lerDiagnosticoAssinado } from '@/lib/diagnostico/assinatura'
+import { configDoNucleo, enviarLeadAoNucleo, montarLeadParaONucleo } from '@/lib/nucleo/lead'
+import { criarLimite } from '@/lib/rate-limit'
 
 interface LeadPayload {
   name?: string
@@ -7,9 +10,21 @@ interface LeadPayload {
   dominio?: string
   nota?: number
   origem?: string
+  assinatura?: string
+  consentimento?: boolean
 }
 
+// Um visitante manda o formulário uma vez. Cinco por minuto é folga para quem
+// errou o número e corrigiu, e aperto para quem quisesse usar esta rota para
+// fazer a Major chamar números em série.
+const limitado = criarLimite(60_000, 5)
+
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'desconhecido'
+  if (limitado(ip)) {
+    return NextResponse.json({ erro: 'Muitas tentativas. Aguarde um minuto.' }, { status: 429 })
+  }
+
   let body: LeadPayload
   try {
     body = await req.json()
@@ -20,6 +35,7 @@ export async function POST(req: NextRequest) {
   const name = String(body.name || '').trim().slice(0, 120)
   const whatsapp = String(body.whatsapp || '').replace(/\D/g, '').slice(0, 13)
   const email = String(body.email || '').trim().slice(0, 160)
+  const consentimento = body.consentimento === true
 
   if (!name || whatsapp.length < 10) {
     return NextResponse.json({ erro: 'Nome e WhatsApp são obrigatórios' }, { status: 400 })
@@ -32,6 +48,7 @@ export async function POST(req: NextRequest) {
     dominio: body.dominio ? String(body.dominio).slice(0, 200) : undefined,
     nota: typeof body.nota === 'number' ? body.nota : undefined,
     origem: body.origem ? String(body.origem).slice(0, 60) : 'diagnostico',
+    consentimento,
     recebidoEm: new Date().toISOString(),
   }
 
@@ -54,6 +71,24 @@ export async function POST(req: NextRequest) {
       if (!res.ok) console.error('[lead] webhook respondeu', res.status)
     } catch (err) {
       console.error('[lead] falha ao enviar pro webhook:', err)
+    }
+  }
+
+  // O Núcleo Major chama o lead no WhatsApp e avisa a equipe. Só com diagnóstico
+  // ASSINADO por /api/diagnostico: é ele que prova que este lead passou pela
+  // análise, e é dele — não do navegador — que saem o site e as notas.
+  const nucleo = configDoNucleo()
+  if (nucleo) {
+    const resumo = lerDiagnosticoAssinado(body.assinatura, process.env.DIAGNOSTICO_SIGNING_SECRET || '')
+    if (!resumo) {
+      console.warn('[lead] nucleo: diagnostico sem assinatura valida; lead nao encaminhado')
+    } else {
+      const resultado = await enviarLeadAoNucleo(
+        montarLeadParaONucleo({ name, whatsapp, email: email || undefined, consentimento }, resumo),
+        nucleo,
+      )
+      if (resultado.ok) console.log('[lead] nucleo: recebido')
+      else console.error('[lead] nucleo: recusado', resultado.status ?? '', resultado.motivo ?? '')
     }
   }
 

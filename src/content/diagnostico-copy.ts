@@ -110,6 +110,7 @@ export const diagnosticoCopy = {
     nomePlaceholder: 'Seu nome',
     whatsappPlaceholder: '(65) 99999-9999',
     whatsappErro: 'Número inválido. Use DDD + número, ex: (65) 99999-9999.',
+    consentimento: 'Quero que a Major me chame no WhatsApp para explicar o resultado.',
     cta: 'Desbloquear relatório completo',
   },
 

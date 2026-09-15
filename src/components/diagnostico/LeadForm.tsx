@@ -13,6 +13,8 @@ interface Props {
   onUnlock: (data: LeadData) => void
   dominio?: string
   nota?: number
+  /** Assinatura do diagnóstico feita pelo servidor; sem ela o lead não segue para o Núcleo */
+  assinatura?: string
 }
 
 const inputClass =
@@ -38,7 +40,7 @@ function isValidWhatsapp(value: string) {
   return true
 }
 
-export function LeadForm({ onUnlock, dominio, nota }: Props) {
+export function LeadForm({ onUnlock, dominio, nota, assinatura }: Props) {
   const [whatsapp, setWhatsapp] = useState('')
   const [whatsappErro, setWhatsappErro] = useState(false)
 
@@ -58,6 +60,7 @@ export function LeadForm({ onUnlock, dominio, nota }: Props) {
     const data = new FormData(e.currentTarget)
     const name = String(data.get('name') || '').trim()
     const email = String(data.get('email') || '').trim()
+    const consentimento = data.get('consentimento') === 'on'
 
     trackLeadClick('diagnostico')
     pushEvent('diagnostico_lead', { name, whatsapp, email })
@@ -67,7 +70,16 @@ export function LeadForm({ onUnlock, dominio, nota }: Props) {
     fetch('/api/lead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, whatsapp, email: email || undefined, dominio, nota, origem: 'diagnostico' }),
+      body: JSON.stringify({
+        name,
+        whatsapp,
+        email: email || undefined,
+        dominio,
+        nota,
+        origem: 'diagnostico',
+        assinatura,
+        consentimento,
+      }),
       keepalive: true,
     }).catch(() => {})
 
@@ -104,6 +116,17 @@ export function LeadForm({ onUnlock, dominio, nota }: Props) {
       </div>
 
       <input name="email" type="email" placeholder="Seu e-mail (opcional)" className={inputClass} />
+
+      {/* Desmarcada de propósito: consentimento marcado por padrão não é consentimento (LGPD).
+          Desbloquear o relatório não depende dela; sem ela ninguém chama pelo WhatsApp. */}
+      <label className="flex items-start gap-3 text-left text-sm text-slate-600 cursor-pointer">
+        <input
+          name="consentimento"
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-[#0099ff]"
+        />
+        <span>{diagnosticoCopy.gate.consentimento}</span>
+      </label>
 
       <button
         type="submit"
