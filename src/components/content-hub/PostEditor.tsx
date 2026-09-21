@@ -4,7 +4,7 @@ import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { ContentClient, ContentPost, MediaAsset, PostAspectRatio, PostFormat, PostStatus } from '@/lib/content-hub/types'
-import { POST_STATUS_LABELS } from '@/lib/content-hub/types'
+import { ASPECT_RATIO_CSS, ASPECT_RATIO_LABELS, POST_STATUS_LABELS } from '@/lib/content-hub/types'
 import PostPreview from './PostPreview'
 import styles from './ContentHub.module.css'
 import cropStyles from './CropControls.module.css'
@@ -21,6 +21,7 @@ interface LocalMedia {
 
 interface FormState {
   title: string
+  creative_code: string
   scheduled_at: string
   format: PostFormat
   aspect_ratio: PostAspectRatio
@@ -31,7 +32,7 @@ interface FormState {
   calendar_id: string
 }
 
-const emptyForm: FormState = { title: '', scheduled_at: '', format: 'image', aspect_ratio: '1:1', caption: '', hashtags: '', internal_notes: '', status: 'draft', calendar_id: '' }
+const emptyForm: FormState = { title: '', creative_code: '', scheduled_at: '', format: 'image', aspect_ratio: '1:1', caption: '', hashtags: '', internal_notes: '', status: 'draft', calendar_id: '' }
 
 function toLocalDateTime(value?: string | null) {
   if (!value) return ''
@@ -72,7 +73,7 @@ export default function PostEditor({ clientId, postId, initialCalendarId }: { cl
       if (postId) {
         if (!postData?.post) throw new Error(postData?.error || 'Publicação não encontrada.')
         const post = postData.post as ContentPost
-        setForm({ title: post.title, scheduled_at: toLocalDateTime(post.scheduled_at), format: post.format, aspect_ratio: post.aspect_ratio ?? '1:1', caption: post.caption, hashtags: post.hashtags, internal_notes: post.internal_notes ?? '', status: post.status, calendar_id: post.calendar_id ?? '' })
+        setForm({ title: post.title, creative_code: post.creative_code ?? '', scheduled_at: toLocalDateTime(post.scheduled_at), format: post.format, aspect_ratio: post.aspect_ratio ?? '1:1', caption: post.caption, hashtags: post.hashtags, internal_notes: post.internal_notes ?? '', status: post.status, calendar_id: post.calendar_id ?? '' })
         const normalized = (post.media_assets ?? []).map(asset => ({ ...asset, crop_x: Number(asset.crop_x ?? 50), crop_y: Number(asset.crop_y ?? 50), zoom: Number(asset.zoom ?? 1) }))
         setMedia(normalized)
         setSelectedId(normalized[0]?.id ?? null)
@@ -163,7 +164,7 @@ export default function PostEditor({ clientId, postId, initialCalendarId }: { cl
     setSavedMessage('')
     try {
       const targetStatus = forcedStatus ?? form.status
-      const payload = { client_id: clientId, calendar_id: form.calendar_id || null, title: form.title, scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null, format: form.format, aspect_ratio: form.aspect_ratio, caption: form.caption, hashtags: form.hashtags, internal_notes: form.internal_notes || null, status: targetStatus }
+      const payload = { client_id: clientId, calendar_id: form.calendar_id || null, title: form.title, creative_code: form.creative_code.trim().toUpperCase() || null, scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null, format: form.format, aspect_ratio: form.aspect_ratio, caption: form.caption, hashtags: form.hashtags, internal_notes: form.internal_notes || null, status: targetStatus }
       const response = await fetch(postId ? `/api/admin/content/posts/${postId}` : '/api/admin/content/posts', { method: postId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Não foi possível salvar a publicação.')
@@ -214,11 +215,12 @@ export default function PostEditor({ clientId, postId, initialCalendarId }: { cl
           <h2 className={styles.sectionHeading}>01 · Planejamento</h2>
           <div className={styles.formGrid}>
             <div className={`${styles.field} ${styles.fieldFull}`}><label htmlFor="post-title">Título interno</label><input id="post-title" required value={form.title} onChange={event => setField('title', event.target.value)} placeholder="Ex.: Carrossel — 5 sinais de que sua marca precisa mudar" /></div>
+            <div className={styles.field}><label htmlFor="post-code">Código da peça</label><input id="post-code" value={form.creative_code} onChange={event => setField('creative_code', event.target.value.toUpperCase())} pattern="[A-Za-z0-9][A-Za-z0-9-]{0,23}" maxLength={24} placeholder="Ex.: R01" /><span className={styles.fieldHint}>O código do plano de conteúdo do cliente. É o que liga esta arte à pauta e ao resultado de mídia.</span></div>
             <div className={styles.field}><label htmlFor="post-calendar">Cronograma</label><select id="post-calendar" value={form.calendar_id} onChange={event => setField('calendar_id', event.target.value)}><option value="">Publicação avulsa</option>{client?.content_calendars?.map(calendar => <option value={calendar.id} key={calendar.id}>{calendar.name}</option>)}</select></div>
             <div className={styles.field}><label htmlFor="post-date">Data prevista</label><input id="post-date" type="datetime-local" value={form.scheduled_at} onChange={event => setField('scheduled_at', event.target.value)} /></div>
             <div className={styles.field}><label htmlFor="post-format">Formato</label><select id="post-format" value={form.format} onChange={event => setField('format', event.target.value as PostFormat)}><option value="image">Imagem única</option><option value="carousel">Carrossel</option><option value="video">Vídeo</option><option value="reel">Reel</option></select></div>
             <div className={styles.field}><label htmlFor="post-status">Etapa atual</label><select id="post-status" value={form.status} onChange={event => setField('status', event.target.value as PostStatus)}>{Object.entries(POST_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
-            <div className={`${styles.field} ${styles.fieldFull}`}><label>Proporção do post</label><div className={cropStyles.ratioPicker}><button className={`${cropStyles.ratioButton} ${form.aspect_ratio === '1:1' ? cropStyles.ratioButtonActive : ''}`} type="button" onClick={() => setField('aspect_ratio', '1:1')}><span className={cropStyles.squareIcon} />Quadrado 1:1</button><button className={`${cropStyles.ratioButton} ${form.aspect_ratio === '4:5' ? cropStyles.ratioButtonActive : ''}`} type="button" onClick={() => setField('aspect_ratio', '4:5')}><span className={cropStyles.portraitIcon} />Retrato 4:5</button></div><span className={styles.fieldHint}>No carrossel, todas as peças usam a mesma proporção, como no Instagram.</span></div>
+            <div className={`${styles.field} ${styles.fieldFull}`}><label>Proporção do post</label><div className={cropStyles.ratioPicker}>{(['1:1', '4:5', '9:16'] as PostAspectRatio[]).map(ratio => <button className={`${cropStyles.ratioButton} ${form.aspect_ratio === ratio ? cropStyles.ratioButtonActive : ''}`} key={ratio} type="button" onClick={() => setField('aspect_ratio', ratio)}><span className={ratio === '1:1' ? cropStyles.squareIcon : ratio === '4:5' ? cropStyles.portraitIcon : cropStyles.verticalIcon} />{ASPECT_RATIO_LABELS[ratio]}</button>)}</div><span className={styles.fieldHint}>No carrossel, todas as peças usam a mesma proporção, como no Instagram. Use 9:16 para reels e stories.</span></div>
           </div>
 
           <hr className={styles.sectionDivider} /><h2 className={styles.sectionHeading}>02 · Peças e enquadramento</h2>
@@ -234,7 +236,7 @@ export default function PostEditor({ clientId, postId, initialCalendarId }: { cl
           </div>}
 
           {selected && <div className={cropStyles.cropPanel}><div className={cropStyles.cropPanelHeader}><strong>Ajustar corte da peça</strong><span>Arraste a imagem dentro do quadro</span></div><div className={cropStyles.cropWorkspace}>
-            <div className={cropStyles.cropFrame} style={{ aspectRatio: form.aspect_ratio === '4:5' ? '4 / 5' : '1 / 1' }} onPointerDown={startDrag} onPointerMove={dragCrop} onPointerUp={stopDrag} onPointerCancel={stopDrag}>
+            <div className={cropStyles.cropFrame} style={{ aspectRatio: ASPECT_RATIO_CSS[form.aspect_ratio] }} onPointerDown={startDrag} onPointerMove={dragCrop} onPointerUp={stopDrag} onPointerCancel={stopDrag}>
               {selected.mime_type.startsWith('video/') ? <video src={selected.url} style={cropStyle(selected)} /> :
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={selected.url} style={cropStyle(selected)} alt="Área de enquadramento" />}<span className={cropStyles.cropGrid} />

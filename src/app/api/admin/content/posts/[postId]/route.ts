@@ -39,6 +39,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
     .update({ ...parsed.data, current_version: currentVersion, updated_at: new Date().toISOString() })
     .eq('id', postId).select().single()
 
+  if (error?.code === '23505') return NextResponse.json({ error: 'Já existe uma publicação deste cliente com esse código de peça.' }, { status: 409 })
   if (error) return NextResponse.json({ error: 'Nao foi possivel salvar a publicacao.', detail: error.message }, { status: 500 })
 
   await supabase.from('post_versions').upsert({

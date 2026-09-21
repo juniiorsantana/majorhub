@@ -1,9 +1,10 @@
-.ratioPicker { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+.ratioPicker { display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); }
 .ratioButton { align-items: center; background: #fff; border: 1px solid #d8e0e9; border-radius: 11px; color: #53657a; cursor: pointer; display: flex; font: 750 12px var(--font-inter), sans-serif; gap: 10px; justify-content: center; min-height: 46px; padding: 8px 12px; }
 .ratioButtonActive { background: #eaf2ff; border-color: #5791eb; color: #1e64cd; box-shadow: 0 0 0 2px rgba(40,120,255,.09); }
-.squareIcon, .portraitIcon { border: 2px solid currentColor; border-radius: 3px; display: block; }
+.squareIcon, .portraitIcon, .verticalIcon { border: 2px solid currentColor; border-radius: 3px; display: block; flex-shrink: 0; }
 .squareIcon { height: 18px; width: 18px; }
 .portraitIcon { height: 22px; width: 18px; }
+.verticalIcon { height: 24px; width: 14px; }
 .cropPanel { background: #fff; border: 1px solid #dbe3ec; border-radius: 14px; margin-top: 14px; overflow: hidden; }
 .cropPanelHeader { align-items: center; border-bottom: 1px solid #e4e9ef; display: flex; justify-content: space-between; padding: 12px 14px; }
 .cropPanelHeader strong { color: #253b54; font-size: 12px; }
@@ -21,4 +22,4 @@
 .mediaTileSelected { box-shadow: 0 0 0 3px rgba(40,120,255,.3); border-color: #2878ff !important; }
 .mediaSelect { background: transparent; border: 0; cursor: pointer; inset: 0; padding: 0; position: absolute; width: 100%; z-index: 1; }
 .mediaTileActionsAbove { z-index: 2; }
-@media (max-width: 680px) { .cropWorkspace { grid-template-columns: 1fr; } .cropFrame { max-width: 230px; } }
+@media (max-width: 680px) { .cropWorkspace { grid-template-columns: 1fr; } .cropFrame { max-width: 230px; } .ratioButton { flex-direction: column; font-size: 11px; gap: 6px; } }

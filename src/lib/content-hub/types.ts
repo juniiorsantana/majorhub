@@ -2,7 +2,7 @@ export type ClientStatus = 'active' | 'archived'
 export type CalendarStatus = 'draft' | 'active' | 'completed' | 'archived'
 export type PostStatus = 'draft' | 'pending_review' | 'changes_requested' | 'in_progress' | 'approved' | 'published' | 'archived'
 export type PostFormat = 'image' | 'carousel' | 'video' | 'reel'
-export type PostAspectRatio = '1:1' | '4:5'
+export type PostAspectRatio = '1:1' | '4:5' | '9:16'
 
 export interface MediaAsset {
   id: string
@@ -30,6 +30,7 @@ export interface ContentPost {
   client_id: string
   calendar_id: string | null
   title: string
+  creative_code?: string | null
   scheduled_at: string | null
   format: PostFormat
   aspect_ratio: PostAspectRatio
@@ -89,4 +90,16 @@ export const CALENDAR_STATUS_LABELS: Record<CalendarStatus, string> = {
   active: 'Em aprovação',
   completed: 'Concluído',
   archived: 'Arquivado',
+}
+
+export const ASPECT_RATIO_CSS: Record<PostAspectRatio, string> = {
+  '1:1': '1 / 1',
+  '4:5': '4 / 5',
+  '9:16': '9 / 16',
+}
+
+export const ASPECT_RATIO_LABELS: Record<PostAspectRatio, string> = {
+  '1:1': 'Quadrado 1:1',
+  '4:5': 'Retrato 4:5',
+  '9:16': 'Vertical 9:16',
 }

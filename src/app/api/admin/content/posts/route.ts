@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     .insert({ ...parsed.data, created_by: authorization.userId })
     .select().single()
 
+  if (error?.code === '23505') return NextResponse.json({ error: 'Já existe uma publicação deste cliente com esse código de peça.' }, { status: 409 })
   if (error) return NextResponse.json({ error: 'Nao foi possivel criar a publicacao.', detail: error.message }, { status: 500 })
 
   await supabase.from('post_versions').insert({

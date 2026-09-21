@@ -29,7 +29,7 @@ interface PortalPost {
   title: string
   scheduled_at: string | null
   format: string
-  aspect_ratio: '1:1' | '4:5'
+  aspect_ratio: '1:1' | '4:5' | '9:16'
   caption: string
   hashtags: string
   status: PortalPostStatus
