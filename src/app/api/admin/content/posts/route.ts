@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authorizeAdmin } from '@/lib/admin/auth'
+import { addToOpenBatch } from '@/lib/content-hub/portal-batches'
 import { postSchema } from '@/lib/content-hub/schemas'
 import { createClient } from '@/lib/supabase/server'
 
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
     snapshot: data,
     created_by: authorization.userId,
   })
+  await addToOpenBatch(supabase, data)
 
   return NextResponse.json({ post: { ...data, media_assets: [], reviews: [] } }, { status: 201 })
 }

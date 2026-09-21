@@ -337,6 +337,7 @@
 .igCaption { color: #20242a; font-size: 11px; line-height: 1.55; padding: 4px 13px 14px; white-space: pre-wrap; }
 .igCaption strong { font-weight: 800; margin-right: 5px; }
 .hashtags { color: #28577f; }
+.captionMore { background: transparent; border: 0; color: #737373; cursor: pointer; font: inherit; padding: 0; }
 
 .approvalPage { background: #eef2f7; color: #0c1828; min-height: 100vh; }
 .approvalHeader { align-items: center; background: #091827; color: white; display: flex; gap: 18px; justify-content: space-between; min-height: 72px; padding: 14px clamp(18px, 5vw, 70px); }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { authorizeAdmin } from '@/lib/admin/auth'
+import { appendToBatch } from '@/lib/content-hub/portal-batches'
 import { createClient } from '@/lib/supabase/server'
 
 const schema = z.object({ calendar_id: z.string().uuid() })
@@ -42,22 +43,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   // Envio já aberto: o que já está no portal continua como está; só entram as publicações criadas depois.
   if (existing) {
-    const { data: members, error: membersError } = await supabase.from('approval_batch_posts').select('post_id, position').eq('batch_id', existing.id)
-    if (membersError) return NextResponse.json({ error: 'Não foi possível ler o envio atual.', detail: membersError.message }, { status: 500 })
-    const inBatch = new Set((members ?? []).map(member => member.post_id))
-    const missing = (posts ?? []).filter(post => !inBatch.has(post.id))
-    if (missing.length) {
-      const nextPosition = Math.max(-1, ...(members ?? []).map(member => member.position)) + 1
-      const { error: addError } = await supabase.from('approval_batch_posts').insert(missing.map((post, index) => ({
-        batch_id: existing.id,
-        post_id: post.id,
-        position: nextPosition + index,
-        version_at_publish: post.current_version,
-      })))
-      if (addError) return NextResponse.json({ error: 'Não foi possível adicionar as publicações novas ao portal.', detail: addError.message }, { status: 500 })
-      await markPendingReview(supabase, missing)
-    }
-    return NextResponse.json({ batch: existing, portal_url: portalUrl, reused: true, added: missing.length })
+    const result = await appendToBatch(supabase, existing.id, posts ?? [])
+    if ('error' in result) return NextResponse.json({ error: 'Não foi possível adicionar as publicações novas ao portal.', detail: result.error }, { status: 500 })
+    await markPendingReview(supabase, result.added)
+    return NextResponse.json({ batch: existing, portal_url: portalUrl, reused: true, added: result.added.length })
   }
 
   if (!posts?.length) return NextResponse.json({ error: 'Adicione ao menos uma publicação antes de liberar o portal.' }, { status: 400 })

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authorizeAdmin } from '@/lib/admin/auth'
+import { addToOpenBatch } from '@/lib/content-hub/portal-batches'
 import { postSchema } from '@/lib/content-hub/schemas'
 import { withSignedMediaUrls } from '@/lib/content-hub/server'
 import { createClient } from '@/lib/supabase/server'
@@ -48,6 +49,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
     snapshot: data,
     created_by: authorization.userId,
   }, { onConflict: 'post_id,version' })
+  await addToOpenBatch(supabase, data)
 
   return NextResponse.json({ post: data })
 }

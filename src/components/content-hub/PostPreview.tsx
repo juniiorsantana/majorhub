@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import styles from './ContentHub.module.css'
 import MediaCarousel from './MediaCarousel'
 import type { PostAspectRatio } from '@/lib/content-hub/types'
@@ -22,10 +23,15 @@ export function InstagramActions({ className = styles.igActions }: { className?:
   )
 }
 
-export default function PostPreview({ post, client }: { post: PreviewPost; client: PreviewClient }) {
+export default function PostPreview({ post, client, captionLimit }: { post: PreviewPost; client: PreviewClient; captionLimit?: number }) {
+  const [captionOpen, setCaptionOpen] = useState(false)
   const media = post.media_assets ?? post.media ?? []
   const handle = client.instagram?.replace(/^@/, '') || client.name.toLowerCase().replace(/\s+/g, '')
   const location = post.scheduled_at ? `Previsto para ${new Date(post.scheduled_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}` : 'Conteúdo em aprovação'
+  const caption = post.caption || 'A legenda aparecerá aqui.'
+  // Como no feed: só o começo da legenda aparece antes do "mais".
+  const truncated = Boolean(captionLimit && !captionOpen && caption.length > captionLimit)
+  const visibleCaption = truncated ? `${caption.slice(0, captionLimit).replace(/\s+\S*$/, '')}…` : caption
 
   return (
     <article className={styles.instagramCard} aria-label="Pré-visualização da publicação">
@@ -40,7 +46,9 @@ export default function PostPreview({ post, client }: { post: PreviewPost; clien
       <MediaCarousel media={media} aspectRatio={post.aspect_ratio} />
 
       <InstagramActions />
-      <div className={styles.igCaption}><strong>{handle}</strong>{post.caption || 'A legenda aparecerá aqui.'}{post.hashtags && <><br /><span className={styles.hashtags}>{post.hashtags}</span></>}</div>
+      <div className={styles.igCaption}><strong>{handle}</strong>{visibleCaption}{truncated
+        ? <> <button className={styles.captionMore} type="button" onClick={() => setCaptionOpen(true)}>mais</button></>
+        : post.hashtags && <><br /><span className={styles.hashtags}>{post.hashtags}</span></>}</div>
     </article>
   )
 }

@@ -5,7 +5,17 @@ import Link from 'next/link'
 import type { ContentCalendar, ContentClient, ContentPost, PostStatus } from '@/lib/content-hub/types'
 import { CALENDAR_STATUS_LABELS, POST_STATUS_LABELS } from '@/lib/content-hub/types'
 import ClientAccessManager from './ClientAccessManager'
+import FeedPlanner, { type ScheduleChange } from './FeedPlanner'
 import styles from './ContentHub.module.css'
+import studio from './ContentStudio.module.css'
+
+type WorkspaceTab = 'feed' | 'calendars' | 'portal'
+
+const TABS: Array<{ id: WorkspaceTab; label: string }> = [
+  { id: 'feed', label: 'Feed' },
+  { id: 'calendars', label: 'Cronogramas' },
+  { id: 'portal', label: 'Portal e acessos' },
+]
 
 interface PortalInfo {
   portal_slug: string
@@ -53,6 +63,7 @@ export default function ClientWorkspace({ clientId }: { clientId: string }) {
   const [calendarRenaming, setCalendarRenaming] = useState(false)
   const [releasing, setReleasing] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [tab, setTab] = useState<WorkspaceTab>('feed')
 
   const loadWorkspace = useCallback(async () => {
     setLoading(true)
@@ -72,10 +83,24 @@ export default function ClientWorkspace({ clientId }: { clientId: string }) {
 
   useEffect(() => { loadWorkspace() }, [loadWorkspace])
 
-  const stats = useMemo(() => {
-    const posts = [...(client?.posts ?? []), ...(client?.content_calendars ?? []).flatMap(calendar => calendar.posts)]
-    return { total: posts.length, pending: posts.filter(post => post.status === 'pending_review').length, changes: posts.filter(post => post.status === 'changes_requested').length, approved: posts.filter(post => post.status === 'approved').length }
-  }, [client])
+  const allPosts = useMemo(() => [...(client?.content_calendars ?? []).flatMap(calendar => calendar.posts), ...(client?.posts ?? [])], [client])
+
+  const stats = useMemo(() => ({
+    total: allPosts.length,
+    pending: allPosts.filter(post => post.status === 'pending_review').length,
+    changes: allPosts.filter(post => post.status === 'changes_requested').length,
+    approved: allPosts.filter(post => post.status === 'approved').length,
+  }), [allPosts])
+
+  function applySchedule(changes: ScheduleChange[]) {
+    const dates = new Map(changes.map(change => [change.id, change.scheduled_at]))
+    const update = (post: ContentPost) => dates.has(post.id) ? { ...post, scheduled_at: dates.get(post.id) ?? null } : post
+    setClient(previous => previous ? {
+      ...previous,
+      posts: previous.posts?.map(update),
+      content_calendars: previous.content_calendars?.map(calendar => ({ ...calendar, posts: calendar.posts.map(update) })),
+    } : previous)
+  }
 
   async function copyPortal() {
     if (!portal) return
@@ -163,28 +188,32 @@ export default function ClientWorkspace({ clientId }: { clientId: string }) {
   if (loading) return <div className={styles.loading}><span className={styles.spin} /><br />Abrindo a pasta do cliente…</div>
   if (!client || !portal) return <div className={styles.errorBox}>{error || 'Cliente não encontrado.'}</div>
 
+  const latestCalendar = client.content_calendars?.[0]
+  const newPostHref = `/admin/clientes/${clientId}/posts/novo${latestCalendar ? `?calendar=${latestCalendar.id}` : ''}`
+
   return <div className={styles.hub}>
     <Link className={styles.backLink} href="/admin/clientes">← Todas as pastas</Link>
     <div className={styles.pageHeader}>
       <div className={styles.clientHero}>{client.avatar_url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img className={styles.avatar} src={client.avatar_url} alt="" />) : <span className={styles.avatarFallback}>{initials(client.name)}</span>}<div><div className={styles.eyebrow}>Pasta do cliente</div><h1 className={styles.pageTitle}>{client.name}</h1><div className={styles.clientMeta}>{client.instagram && <span>@{client.instagram}</span>}<span>{client.email}</span>{client.contact_name && <span>Contato: {client.contact_name}</span>}</div></div></div>
-      <div className={styles.toolbar} style={{ marginBottom: 0 }}><Link className={styles.secondaryButton} href={`/admin/clientes/${clientId}/editar`}>Editar cliente</Link><button className={styles.primaryButton} type="button" onClick={() => setCalendarModal(true)}>＋ Novo cronograma</button></div>
+      <div className={styles.toolbar} style={{ marginBottom: 0 }}><Link className={styles.secondaryButton} href={`/admin/clientes/${clientId}/editar`}>Editar cliente</Link><Link className={styles.primaryButton} href={newPostHref}>＋ Nova publicação</Link></div>
     </div>
     {error && <div className={styles.errorBox}>{error}</div>}{notice && <div className={styles.successBox}>{notice}</div>}
 
-    <section className={styles.surface} style={{ marginBottom: 22 }}>
-      <div className={styles.surfaceHeader}><div><div className={styles.eyebrow} style={{ color: '#2878ff' }}>Portal permanente</div><strong style={{ color: '#13273f', fontSize: 17 }}>/{portal.portal_slug}</strong></div><button className={styles.primaryButton} type="button" onClick={copyPortal}>{copied ? 'Copiado ✓' : 'Copiar link do cliente'}</button></div>
-      <div className={styles.surfaceBody} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(220px, .6fr)', gap: 18 }}>
-        <div><p style={{ color: '#607188', fontSize: 13, lineHeight: 1.65, margin: 0 }}>Este endereço não expira e não precisa ser gerado novamente. Publicações criadas depois de liberar o cronograma só aparecem no portal quando você as envia pelo botão do cronograma.</p><div style={{ background: '#eaf2ff', border: '1px solid #cddfff', borderRadius: 11, color: '#245da9', fontSize: 12, marginTop: 13, padding: 12, wordBreak: 'break-all' }}>{portal.portal_url}</div></div>
-        <div style={{ background: '#fff', border: '1px solid #dfe5ed', borderRadius: 12, padding: 13 }}><span style={{ color: '#7b8a9c', display: 'block', fontSize: 9, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>Acesso protegido</span><strong style={{ color: '#263a52', display: 'block', fontSize: 12, marginTop: 7 }}>E-mail + senha individual</strong><span style={{ color: '#8b98a8', display: 'block', fontSize: 10, marginTop: 5 }}>Cada decisão fica vinculada à pessoa que entrou.</span></div>
-      </div>
-    </section>
+    <div className={studio.tabs} role="tablist" aria-label="Seções da pasta">
+      {TABS.map(item => <button className={studio.tab} type="button" role="tab" key={item.id} id={`tab-${item.id}`} aria-selected={tab === item.id} aria-controls={`panel-${item.id}`} onClick={() => setTab(item.id)}>
+        {item.label}{item.id === 'calendars' && Boolean(client.content_calendars?.length) && <span className={studio.tabCount}>{client.content_calendars?.length}</span>}
+      </button>)}
+    </div>
 
-    <ClientAccessManager clientId={clientId} clientName={client.name} />
+    {tab === 'feed' && <div role="tabpanel" id="panel-feed" aria-labelledby="tab-feed">
+      <FeedPlanner clientId={clientId} posts={allPosts} calendars={client.content_calendars ?? []} onScheduleChange={applySchedule} />
+    </div>}
 
+    {tab === 'calendars' && <div role="tabpanel" id="panel-calendars" aria-labelledby="tab-calendars">
     <div className={styles.summaryRail}><div className={styles.summaryCard}><strong>{stats.total}</strong><span>Publicações</span></div><div className={styles.summaryCard}><strong>{stats.pending}</strong><span>Aguardando</span></div><div className={styles.summaryCard}><strong>{stats.changes}</strong><span>Correções</span></div><div className={styles.summaryCard}><strong>{stats.approved}</strong><span>Aprovadas</span></div></div>
-    <div className={styles.toolbar} style={{ justifyContent: 'space-between' }}><div><div className={styles.eyebrow}>Linha de produção</div><strong style={{ color: '#dceafb', fontSize: 15 }}>Cronogramas de conteúdo</strong></div></div>
+    <div className={styles.toolbar} style={{ justifyContent: 'space-between' }}><div><div className={styles.eyebrow}>Linha de produção</div><strong style={{ color: '#dceafb', fontSize: 15 }}>Cronogramas de conteúdo</strong></div><button className={styles.primaryButton} type="button" onClick={() => setCalendarModal(true)}>＋ Novo cronograma</button></div>
 
     <div className={styles.calendarStack}>{(client.content_calendars ?? []).map(calendar => {
       const batch = portal.batches.find(item => item.calendar_id === calendar.id && item.status === 'open')
@@ -195,6 +224,19 @@ export default function ClientWorkspace({ clientId }: { clientId: string }) {
       {Boolean(client.posts?.length) && <section className={styles.calendar}><header className={styles.calendarHeader}><div><h2 className={styles.calendarTitle}>Publicações avulsas</h2><div className={styles.calendarDates}>Conteúdos ainda sem cronograma</div></div><Link className={styles.primaryButton} href={`/admin/clientes/${clientId}/posts/novo`}>＋ Publicação</Link></header><PostRows posts={client.posts ?? []} clientId={clientId} /></section>}
       {!(client.content_calendars?.length) && !(client.posts?.length) && <div className={styles.emptyState}><strong>Esta pasta ainda está vazia</strong><span>Crie um cronograma para organizar a primeira sequência de posts.</span><button className={styles.primaryButton} type="button" onClick={() => setCalendarModal(true)}>Criar cronograma</button></div>}
     </div>
+    </div>}
+
+    {tab === 'portal' && <div role="tabpanel" id="panel-portal" aria-labelledby="tab-portal">
+    <section className={styles.surface} style={{ marginBottom: 22 }}>
+      <div className={styles.surfaceHeader}><div><div className={styles.eyebrow} style={{ color: '#2878ff' }}>Portal permanente</div><strong style={{ color: '#13273f', fontSize: 17 }}>/{portal.portal_slug}</strong></div><button className={styles.primaryButton} type="button" onClick={copyPortal}>{copied ? 'Copiado ✓' : 'Copiar link do cliente'}</button></div>
+      <div className={styles.surfaceBody} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(220px, .6fr)', gap: 18 }}>
+        <div><p style={{ color: '#607188', fontSize: 13, lineHeight: 1.65, margin: 0 }}>Este endereço não expira e não precisa ser gerado novamente. Depois que o cronograma é liberado, cada publicação enviada para aprovação entra sozinha no portal. Rascunhos só aparecem quando forem enviados.</p><div style={{ background: '#eaf2ff', border: '1px solid #cddfff', borderRadius: 11, color: '#245da9', fontSize: 12, marginTop: 13, padding: 12, wordBreak: 'break-all' }}>{portal.portal_url}</div></div>
+        <div style={{ background: '#fff', border: '1px solid #dfe5ed', borderRadius: 12, padding: 13 }}><span style={{ color: '#7b8a9c', display: 'block', fontSize: 9, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>Acesso protegido</span><strong style={{ color: '#263a52', display: 'block', fontSize: 12, marginTop: 7 }}>E-mail + senha individual</strong><span style={{ color: '#8b98a8', display: 'block', fontSize: 10, marginTop: 5 }}>Cada decisão fica vinculada à pessoa que entrou.</span></div>
+      </div>
+    </section>
+
+    <ClientAccessManager clientId={clientId} clientName={client.name} />
+    </div>}
 
     {editingCalendar && <div className={styles.modalBackdrop} role="presentation" onMouseDown={event => event.target === event.currentTarget && setEditingCalendar(null)}><form className={styles.modal} onSubmit={renameCalendar}><h2 className={styles.modalTitle}>Renomear cronograma</h2><div className={styles.field}><label htmlFor="rename-calendar">Nome do cronograma</label><input id="rename-calendar" autoFocus required minLength={2} maxLength={120} value={calendarName} onChange={event => setCalendarName(event.target.value)} placeholder="Ex.: Conteúdo de agosto" /></div><div className={styles.formActions}><button className={styles.quietButton} type="button" onClick={() => setEditingCalendar(null)}>Cancelar</button><button className={styles.primaryButton} disabled={calendarRenaming || calendarName.trim().length < 2} type="submit">{calendarRenaming ? 'Salvando…' : 'Salvar nome'}</button></div></form></div>}
 
