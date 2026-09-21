@@ -98,6 +98,13 @@ export const ASPECT_RATIO_CSS: Record<PostAspectRatio, string> = {
   '9:16': '9 / 16',
 }
 
+// Largura sobre altura, para contas de layout (a janela do portal dimensiona a arte por ela).
+export const ASPECT_RATIO_VALUE: Record<PostAspectRatio, number> = {
+  '1:1': 1,
+  '4:5': 0.8,
+  '9:16': 0.5625,
+}
+
 export const ASPECT_RATIO_LABELS: Record<PostAspectRatio, string> = {
   '1:1': 'Quadrado 1:1',
   '4:5': 'Retrato 4:5',

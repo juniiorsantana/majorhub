@@ -343,10 +343,10 @@
 .approvalBrand { align-items: center; display: flex; gap: 10px; }
 .approvalBrandMark { align-items: center; background: #2878ff; border-radius: 10px; display: flex; font: 800 13px var(--font-sora), sans-serif; height: 34px; justify-content: center; width: 34px; }
 .approvalBrand strong { display: block; font: 750 13px var(--font-sora), sans-serif; }
-.approvalBrand span { color: #7890a7; display: block; font-size: 9px; letter-spacing: .07em; margin-top: 2px; text-transform: uppercase; }
+.approvalBrand div span { color: #7890a7; display: block; font-size: 9px; letter-spacing: .07em; margin-top: 2px; text-transform: uppercase; }
 .approvalClient { align-items: center; display: flex; gap: 10px; text-align: right; }
 .approvalClient strong { display: block; font-size: 12px; }
-.approvalClient span { color: #7890a7; display: block; font-size: 10px; margin-top: 2px; }
+.approvalClient div span { color: #7890a7; display: block; font-size: 10px; margin-top: 2px; }
 .approvalClient .avatar,
 .approvalClient .avatarFallback { border-color: #15304a; box-shadow: none; height: 38px; width: 38px; }
 

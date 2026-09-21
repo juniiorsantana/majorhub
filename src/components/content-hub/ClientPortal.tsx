@@ -1,81 +1,61 @@
 'use client'
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
-import PostPreview from './PostPreview'
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import FeedThumb from './FeedThumb'
+import PortalPostDialog from './PortalPostDialog'
 import hubStyles from './ContentHub.module.css'
 import styles from './ClientPortal.module.css'
+import feedStyles from './PortalFeed.module.css'
+import { chronological, nextPendingIndex, previousFeedPosts, reviewState, type ReviewState } from '@/lib/content-hub/portal-feed'
+import type { PostStatus } from '@/lib/content-hub/types'
+import type { PortalBatch, PortalFeed, PortalPost, ReviewDecision } from './portal-types'
 
-type ReviewDecision = 'approved' | 'changes_requested'
-type PortalPostStatus = 'draft' | 'pending_review' | 'changes_requested' | 'in_progress' | 'approved' | 'published' | 'archived'
-
-interface PortalMedia {
-  id: string
-  url?: string
-  mime_type: string
-  crop_x?: number
-  crop_y?: number
-  zoom?: number
-}
-
-interface PortalReview {
-  decision: ReviewDecision
-  comment: string | null
-  reviewer_name: string | null
-  created_at: string
-}
-
-interface PortalPost {
-  id: string
-  title: string
-  scheduled_at: string | null
-  format: string
-  aspect_ratio: '1:1' | '4:5' | '9:16'
-  caption: string
-  hashtags: string
-  status: PortalPostStatus
-  current_version: number
-  version_at_publish: number
-  media: PortalMedia[]
-  latest_review: PortalReview | null
-}
-
-interface PortalBatch {
-  id: string
-  title: string
-  slug: string
-  status: 'draft' | 'open' | 'closed' | 'archived'
-  published_at: string | null
-  posts: PortalPost[]
-}
-
-interface PortalFeed {
-  client: {
-    id: string
-    name: string
-    contact_name: string | null
-    instagram: string | null
-    avatar_url: string | null
-  }
-  batches: PortalBatch[]
+const STATUS_LABELS: Record<ReviewState, string> = {
+  pending: 'a revisar',
+  approved: 'aprovada',
+  changes: 'ajuste pedido',
 }
 
 function initials(name: string) {
   return name.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()
 }
 
-function formatDate(value: string | null) {
-  if (!value) return 'Data a definir'
-  return new Date(value).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'long' })
+function shortDate(value: string | null) {
+  if (!value) return 'Sem data'
+  const date = new Date(value)
+  return `${date.getDate()} ${date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}`
 }
 
-function dotClass(status: PortalPostStatus) {
-  if (status === 'approved' || status === 'published') return hubStyles.dotApproved
-  if (status === 'changes_requested' || status === 'in_progress') return hubStyles.dotChanges
-  return hubStyles.dotPending
+function isPending(post: PortalPost) {
+  return reviewState(post.status) === 'pending'
 }
 
-function isReviewed(post: PortalPost) {
-  return post.status === 'approved' || post.status === 'published' || post.status === 'changes_requested' || post.status === 'in_progress'
+function allReviewed(batch?: PortalBatch) {
+  return Boolean(batch && batch.posts.length > 0 && !batch.posts.some(isPending))
+}
+
+function plural(count: number, singular: string, pluralForm: string) {
+  return count === 1 ? singular : pluralForm
+}
+
+function FormatIcon({ post }: { post: PortalPost }) {
+  if (post.media.length > 1) {
+    return <svg className={feedStyles.formatIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><rect x="7" y="7" width="13" height="13" rx="2" /><path d="M4 16V6a2 2 0 0 1 2-2h10" /></svg>
+  }
+  if (post.format === 'reel' || post.format === 'video') {
+    return <svg className={feedStyles.formatIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" /><path d="m10 8.5 5 3.5-5 3.5z" fill="currentColor" /></svg>
+  }
+  return null
+}
+
+function StatusBadge({ state }: { state: ReviewState }) {
+  if (state === 'approved') {
+    return <span className={`${feedStyles.badge} ${feedStyles.badgeApproved}`}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Aprovada</span>
+  }
+  if (state === 'changes') {
+    return <span className={`${feedStyles.badge} ${feedStyles.badgeChanges}`}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>Ajuste</span>
+  }
+  return <span className={`${feedStyles.badge} ${feedStyles.badgePending}`}>Revisar</span>
 }
 
 export default function ClientPortal({ slug }: { slug: string }) {
@@ -88,9 +68,9 @@ export default function ClientPortal({ slug }: { slug: string }) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [batchIndex, setBatchIndex] = useState(0)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [correctionOpen, setCorrectionOpen] = useState(false)
-  const [comment, setComment] = useState('')
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [followerView, setFollowerView] = useState(false)
+  const advanceTimer = useRef<number | undefined>(undefined)
 
   const loadPortal = useCallback(async () => {
     setLoading(true)
@@ -104,13 +84,15 @@ export default function ClientPortal({ slug }: { slug: string }) {
         return
       }
       if (!response.ok) throw new Error(data.error || 'Não foi possível abrir o portal agora.')
-      setFeed(data)
-      setAuthenticated(true)
-      const firstOpen = data.batches.findIndex((batch: PortalBatch) => batch.status === 'open')
+      const nextFeed = data as PortalFeed
+      const firstOpen = nextFeed.batches.findIndex(batch => batch.status === 'open')
       const nextBatchIndex = firstOpen >= 0 ? firstOpen : 0
+      setFeed(nextFeed)
+      setAuthenticated(true)
       setBatchIndex(nextBatchIndex)
-      const firstPending = data.batches[nextBatchIndex]?.posts.findIndex((post: PortalPost) => !isReviewed(post)) ?? -1
-      setCurrentIndex(firstPending >= 0 ? firstPending : 0)
+      setOpenIndex(null)
+      // Quem volta a um envio já todo respondido vê direto o feed como os seguidores vão ver.
+      setFollowerView(allReviewed(nextFeed.batches[nextBatchIndex]))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível abrir o portal agora.')
     } finally {
@@ -119,10 +101,19 @@ export default function ClientPortal({ slug }: { slug: string }) {
   }, [slug])
 
   useEffect(() => { loadPortal() }, [loadPortal])
+  useEffect(() => () => window.clearTimeout(advanceTimer.current), [])
 
   const batch = feed?.batches[batchIndex]
-  const current = batch?.posts[currentIndex]
-  const reviewedCount = useMemo(() => batch?.posts.filter(isReviewed).length ?? 0, [batch])
+  // A navegação segue a ordem de publicação; a grade mostra o inverso, como o perfil.
+  const posts = useMemo(() => chronological(batch?.posts ?? []), [batch])
+  const gridPosts = useMemo(() => posts.map((post, index) => ({ post, index })).reverse(), [posts])
+  const history = useMemo(() => (feed && batch ? previousFeedPosts(feed.batches, batch.id) : []), [feed, batch])
+  const counts = useMemo(() => {
+    const totals: Record<ReviewState, number> = { pending: 0, approved: 0, changes: 0 }
+    posts.forEach(post => { totals[reviewState(post.status)] += 1 })
+    return totals
+  }, [posts])
+  const current = openIndex === null ? undefined : posts[openIndex]
 
   async function login(event: FormEvent) {
     event.preventDefault()
@@ -146,7 +137,9 @@ export default function ClientPortal({ slug }: { slug: string }) {
 
   async function logout() {
     await fetch(`/api/portal/${encodeURIComponent(slug)}/logout`, { method: 'POST' })
+    window.clearTimeout(advanceTimer.current)
     setFeed(null)
+    setOpenIndex(null)
     setEmail('')
     setAuthenticated(false)
     setNotice('')
@@ -154,31 +147,35 @@ export default function ClientPortal({ slug }: { slug: string }) {
   }
 
   function selectBatch(index: number) {
+    window.clearTimeout(advanceTimer.current)
     setBatchIndex(index)
-    const firstPending = feed?.batches[index]?.posts.findIndex(post => !isReviewed(post)) ?? -1
-    setCurrentIndex(firstPending >= 0 ? firstPending : 0)
-    setCorrectionOpen(false)
-    setComment('')
+    setOpenIndex(null)
+    setFollowerView(allReviewed(feed?.batches[index]))
     setNotice('')
+    setError('')
   }
 
-  function selectPost(index: number) {
-    setCurrentIndex(index)
-    setCorrectionOpen(false)
-    setComment('')
+  function openPost(index: number) {
+    window.clearTimeout(advanceTimer.current)
+    setOpenIndex(index)
     setNotice('')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setError('')
   }
 
-  function nextPost() {
-    if (!batch) return
-    const nextPending = batch.posts.findIndex((post, index) => index > currentIndex && !isReviewed(post))
-    if (nextPending >= 0) selectPost(nextPending)
-    else if (currentIndex < batch.posts.length - 1) selectPost(currentIndex + 1)
+  function closePost() {
+    window.clearTimeout(advanceTimer.current)
+    setOpenIndex(null)
+    setNotice('')
+    setError('')
   }
 
-  async function submitDecision(decision: ReviewDecision) {
-    if (!batch || !current || decisionSubmitting || (decision === 'changes_requested' && !comment.trim())) return
+  function continueReview() {
+    const firstPending = posts.findIndex(isPending)
+    if (firstPending >= 0) openPost(firstPending)
+  }
+
+  async function submitDecision(decision: ReviewDecision, comment: string | null) {
+    if (!batch || !current || openIndex === null || decisionSubmitting) return false
     setDecisionSubmitting(decision)
     setError('')
     setNotice('')
@@ -186,41 +183,47 @@ export default function ClientPortal({ slug }: { slug: string }) {
       const response = await fetch(`/api/portal/${encodeURIComponent(slug)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ batch_id: batch.id, post_id: current.id, decision, comment: decision === 'changes_requested' ? comment.trim() : null }),
+        body: JSON.stringify({ batch_id: batch.id, post_id: current.id, decision, comment }),
       })
       const data = await response.json()
       if (response.status === 401) {
         setAuthenticated(false)
         setFeed(null)
+        setOpenIndex(null)
         throw new Error('Sua sessão expirou. Informe seu e-mail novamente.')
       }
       if (!response.ok) throw new Error(data.error || 'Não foi possível registrar sua resposta.')
 
+      const status = data.status as PostStatus
+      const review = { decision, comment, reviewer_name: null, created_at: new Date().toISOString() }
       setFeed(previous => previous ? {
         ...previous,
         batches: previous.batches.map(item => item.id !== batch.id ? item : {
           ...item,
-          posts: item.posts.map(post => post.id !== current.id ? post : {
-            ...post,
-            status: data.status,
-            latest_review: {
-              decision,
-              comment: decision === 'changes_requested' ? comment.trim() : null,
-              reviewer_name: null,
-              created_at: new Date().toISOString(),
-            },
-          }),
+          posts: item.posts.map(post => post.id !== current.id ? post : { ...post, status, latest_review: review }),
         }),
       } : previous)
-      setCorrectionOpen(false)
-      setComment('')
-      const hasNextPost = currentIndex < batch.posts.length - 1
-      setNotice(decision === 'approved'
-        ? (hasNextPost ? 'Aprovado — abrindo o próximo conteúdo…' : 'Publicação aprovada. Todos os conteúdos foram revisados.')
-        : (hasNextPost ? 'Correção enviada — abrindo o próximo conteúdo…' : 'Correção enviada. Todos os conteúdos foram revisados.'))
-      if (hasNextPost) window.setTimeout(nextPost, 850)
+
+      const updated = posts.map(post => post.id === current.id ? { ...post, status } : post)
+      const next = nextPendingIndex(updated, openIndex, isPending)
+      const approved = decision === 'approved'
+      setNotice(next >= 0
+        ? (approved ? 'Aprovada. Abrindo a próxima…' : 'Ajuste enviado. Abrindo a próxima…')
+        : (approved ? 'Aprovada. Era a última pendente.' : 'Ajuste enviado. Era a última pendente.'))
+      advanceTimer.current = window.setTimeout(() => {
+        if (next >= 0) {
+          openPost(next)
+          return
+        }
+        // Tudo respondido: fecha a janela e mostra o mês como os seguidores vão ver.
+        setOpenIndex(null)
+        setNotice('')
+        setFollowerView(true)
+      }, 900)
+      return true
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível registrar sua resposta.')
+      return false
     } finally {
       setDecisionSubmitting(null)
     }
@@ -260,7 +263,7 @@ export default function ClientPortal({ slug }: { slug: string }) {
     </main>
   }
 
-  if (!feed || !batch || !current) {
+  if (!feed || !batch || !posts.length) {
     return <main className={`${hubStyles.hub} ${hubStyles.approvalPage}`}>
       <header className={hubStyles.approvalHeader}><div className={hubStyles.approvalBrand}><span className={hubStyles.approvalBrandMark}>MH</span><div><strong>Major Hub</strong><span>Portal de aprovação</span></div></div><button className={styles.logoutButton} type="button" onClick={logout}>Sair</button></header>
       <div className={hubStyles.approvalEmpty}><div className={hubStyles.approvalBrandMark}>✓</div><h1>Tudo em dia por aqui</h1><p>A Major Hub ainda não liberou um cronograma para aprovação neste portal.</p></div>
@@ -269,9 +272,12 @@ export default function ClientPortal({ slug }: { slug: string }) {
 
   const handle = feed.client.instagram?.replace(/^@/, '') || slug
   const batchOpen = batch.status === 'open'
+  const reviewView = !followerView
+  const reviewedCount = counts.approved + counts.changes
+  const hasBatchNav = feed.batches.length > 1
 
-  return <main className={`${hubStyles.hub} ${hubStyles.approvalPage}`}>
-    <header className={hubStyles.approvalHeader}>
+  return <main className={`${hubStyles.hub} ${feedStyles.page} ${hasBatchNav ? feedStyles.withBatchNav : ''}`}>
+    <header className={`${hubStyles.approvalHeader} ${feedStyles.pageHeader}`}>
       <div className={hubStyles.approvalBrand}><span className={hubStyles.approvalBrandMark}>MH</span><div><strong>Major Hub</strong><span>Portal de aprovação</span></div></div>
       <div className={styles.headerRight}>
         <div className={hubStyles.approvalClient}><div><strong>{feed.client.name}</strong><span>@{handle}</span></div>{feed.client.avatar_url ? (
@@ -282,75 +288,91 @@ export default function ClientPortal({ slug }: { slug: string }) {
       </div>
     </header>
 
-    {feed.batches.length > 1 && <nav className={styles.batchNav} aria-label="Envios disponíveis">{feed.batches.map((item, index) => <button className={index === batchIndex ? styles.batchActive : ''} key={item.id} onClick={() => selectBatch(index)} type="button"><span>{item.status === 'open' ? 'Em aprovação' : 'Histórico'}</span>{item.title}</button>)}</nav>}
+    {hasBatchNav && <nav className={`${styles.batchNav} ${feedStyles.pageBatchNav}`} aria-label="Envios disponíveis">{feed.batches.map((item, index) => <button className={index === batchIndex ? styles.batchActive : ''} key={item.id} onClick={() => selectBatch(index)} type="button"><span>{item.status === 'open' ? 'Em aprovação' : 'Histórico'}</span>{item.title}</button>)}</nav>}
 
-    <div className={hubStyles.approvalProgress}>
-      <div className={hubStyles.progressTop}><strong>{reviewedCount} de {batch.posts.length} analisadas</strong><span>{batchOpen ? 'Seu progresso fica salvo automaticamente' : 'Este envio está encerrado'}</span></div>
-      <div className={hubStyles.progressTrack}><div className={hubStyles.progressFill} style={{ width: `${batch.posts.length ? reviewedCount / batch.posts.length * 100 : 0}%` }} /></div>
-    </div>
-
-
-    <section className={styles.mobileDecisionBar} aria-label="Aprovação da publicação atual">
-      <div className={styles.mobilePostNav}>
-        <button aria-label="Publicação anterior" disabled={currentIndex === 0} type="button" onClick={() => selectPost(currentIndex - 1)}>‹</button>
-        <div className={styles.mobilePostIdentity}>
-          <span>Publicação {String(currentIndex + 1).padStart(2, '0')} de {String(batch.posts.length).padStart(2, '0')}</span>
-          <strong>{current.title}</strong>
-          <small>{formatDate(current.scheduled_at)}</small>
+    <section className={feedStyles.profile} aria-label="Perfil">
+      <div className={feedStyles.profileInner}>
+        {feed.client.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className={feedStyles.avatar} src={feed.client.avatar_url} alt="" />
+        ) : <span className={feedStyles.avatar} aria-hidden="true">{initials(feed.client.name)}</span>}
+        <h1 className={feedStyles.handle}>{handle}</h1>
+        {batchOpen && counts.pending > 0 && <button type="button" className={feedStyles.continueButton} onClick={continueReview}>
+          {reviewedCount ? 'Continuar revisão' : 'Começar revisão'}
+        </button>}
+        <ul className={feedStyles.stats}>
+          <li><strong>{counts.pending}</strong> a revisar</li>
+          <li><strong>{counts.approved}</strong> {plural(counts.approved, 'aprovada', 'aprovadas')}</li>
+          <li><strong>{counts.changes}</strong> {plural(counts.changes, 'ajuste', 'ajustes')}</li>
+        </ul>
+        <div className={feedStyles.bio}>
+          <strong>{feed.client.name}</strong>
+          <span>{batch.title} · {posts.length} {plural(posts.length, 'publicação', 'publicações')}</span>
+          <span className={feedStyles.bioHint}>{batchOpen ? 'Abra uma publicação para ver como ela fica e aprovar.' : 'Este envio está encerrado e fica disponível para consulta.'}</span>
         </div>
-        <button aria-label="Próxima publicação" disabled={currentIndex === batch.posts.length - 1} type="button" onClick={() => selectPost(currentIndex + 1)}>›</button>
       </div>
-
-      {notice && <div className={styles.mobileNotice}>{notice}</div>}
-      {error && <div className={styles.mobileError}>{error}</div>}
-
-      {decisionSubmitting ? <div className={[styles.mobileResolved, styles.mobileSaving].join(' ')} role="status" aria-live="polite">{decisionSubmitting === 'approved' ? 'Aprovando publicação…' : 'Enviando correção…'}</div> : !batchOpen ? <div className={styles.mobileResolved}>Envio encerrado · disponível para consulta</div> : current.status === 'approved' || current.status === 'published' ? <div className={[styles.mobileResolved, styles.mobileApproved].join(' ')}>✓ Publicação aprovada</div> : current.status === 'changes_requested' || current.status === 'in_progress' ? <div className={[styles.mobileResolved, styles.mobileChanges].join(' ')}>Correção solicitada à equipe</div> : <>
-        <div className={styles.mobileDecisionActions}>
-          <button className={styles.mobileApprove} disabled={decisionSubmitting !== null} type="button" onClick={() => submitDecision('approved')}>{decisionSubmitting === 'approved' ? 'Aprovando…' : '✓ Aprovar'}</button>
-          <button className={styles.mobileCorrect} disabled={decisionSubmitting !== null} type="button" onClick={() => setCorrectionOpen(previous => !previous)}>Corrigir</button>
-        </div>
-        {correctionOpen && <div className={styles.mobileCorrection}>
-          <label htmlFor="mobile-correction">O que precisa mudar?</label>
-          <textarea id="mobile-correction" autoFocus value={comment} onChange={event => setComment(event.target.value)} placeholder="Indique a imagem, legenda ou informação que precisa de ajuste." />
-          <div><button type="button" onClick={() => setCorrectionOpen(false)}>Cancelar</button><button disabled={decisionSubmitting !== null || !comment.trim()} type="button" onClick={() => submitDecision('changes_requested')}>{decisionSubmitting === 'changes_requested' ? 'Enviando…' : 'Enviar correção'}</button></div>
-        </div>}
-      </>}
     </section>
 
-    <div className={`${hubStyles.approvalLayout} ${styles.mobilePreviewLayout}`}>
-      <aside className={`${hubStyles.sequencePanel} ${styles.desktopSequence}`}>
-        <div className={hubStyles.sequenceTitle}>{batch.title}</div>
-        <div className={hubStyles.sequenceList}>{batch.posts.map((post, index) => <button className={`${hubStyles.sequenceItem} ${index === currentIndex ? hubStyles.sequenceItemActive : ''}`} key={post.id} type="button" onClick={() => selectPost(index)}><span className={hubStyles.sequenceNumber}>{String(index + 1).padStart(2, '0')}</span><span className={hubStyles.sequenceInfo}><strong>{post.title}</strong><span>{formatDate(post.scheduled_at)}</span></span><span className={`${hubStyles.statusDot} ${dotClass(post.status)}`} /></button>)}</div>
-      </aside>
+    <nav className={feedStyles.tabs} aria-label="Modo de visualização">
+      <button type="button" aria-pressed={reviewView} onClick={() => setFollowerView(false)}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m3 7 2 2 4-4" /><path d="m3 17 2 2 4-4" /><path d="M13 6h8" /><path d="M13 12h8" /><path d="M13 18h8" /></svg>
+        Revisão
+      </button>
+      <button type="button" aria-pressed={followerView} onClick={() => setFollowerView(true)}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>
+        Como seguidor
+      </button>
+    </nav>
 
-      <section className={hubStyles.previewColumn}>
-        <div className={hubStyles.proofLabel}><strong>Publicação {String(currentIndex + 1).padStart(2, '0')}</strong><span>Arraste para ver o carrossel</span></div>
-        <PostPreview key={current.id} post={current} client={feed.client} />
-      </section>
+    {/* No computador só esta área rola; cabeçalho, perfil e abas ficam parados. */}
+    <div className={feedStyles.gridScroll} data-lenis-prevent>
+      <div className={feedStyles.gridInner}>
+        {batchOpen && counts.pending === 0 && <p role="status" className={feedStyles.doneBanner}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8 12 3 3 5-6" /></svg>
+          <span><strong>Revisão concluída.</strong> {counts.approved} {plural(counts.approved, 'aprovada', 'aprovadas')}{counts.changes ? ` e ${counts.changes} ${plural(counts.changes, 'ajuste enviado', 'ajustes enviados')} à equipe` : ''}. Este é o feed como seus seguidores vão ver.</span>
+        </p>}
+        {reviewView && <p className={feedStyles.hint}>A mais recente aparece primeiro, como no seu perfil.</p>}
 
-      <aside className={`${hubStyles.reviewPanel} ${styles.desktopReview}`}>
-        <div className={hubStyles.reviewIndex}>{String(currentIndex + 1).padStart(2, '0')} <span>/ {String(batch.posts.length).padStart(2, '0')}</span></div>
-        <h1 className={hubStyles.reviewTitle}>{current.title}</h1>
-        <div className={hubStyles.reviewDate}>{formatDate(current.scheduled_at)} · versão {current.current_version}</div>
-        <hr className={hubStyles.reviewDivider} />
+        <ul className={feedStyles.grid}>
+          {gridPosts.map(({ post, index }) => {
+            const state = reviewState(post.status)
+            const label = [post.creative_code, post.title, shortDate(post.scheduled_at), STATUS_LABELS[state]].filter(Boolean).join(', ')
+            return <li key={post.id}>
+              <button type="button" className={feedStyles.tile} onClick={() => openPost(index)} aria-label={label}>
+                <FeedThumb media={post.media} aspectRatio={post.aspect_ratio} />
+                <FormatIcon post={post} />
+                {reviewView && <StatusBadge state={state} />}
+                {reviewView && <span className={feedStyles.tileDate}>{shortDate(post.scheduled_at)}</span>}
+              </button>
+            </li>
+          })}
+        </ul>
 
-        {notice && <div className={hubStyles.successBox}>{notice}</div>}
-        {error && <div className={hubStyles.errorBox}>{error}</div>}
-
-        {decisionSubmitting ? <div className={`${hubStyles.resolvedBox} ${styles.decisionSaving}`} role="status" aria-live="polite"><strong>{decisionSubmitting === 'approved' ? 'Aprovando publicação…' : 'Enviando correção…'}</strong><br />Registrando sua decisão com segurança.</div> : !batchOpen ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedApproved}`}><strong>Envio encerrado</strong><br />Este cronograma está disponível apenas para consulta.</div> : current.status === 'approved' || current.status === 'published' ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedApproved}`}><strong>✓ Publicação aprovada</strong><br />Sua aprovação já foi registrada.</div> : current.status === 'changes_requested' || current.status === 'in_progress' ? <div className={`${hubStyles.resolvedBox} ${hubStyles.resolvedChanges}`}><strong>Correção solicitada</strong><br />A equipe da Major Hub recebeu seu pedido.{current.latest_review?.comment && <span className={hubStyles.feedbackQuote}>{current.latest_review.comment}</span>}</div> : <>
-          <p className={hubStyles.reviewPrompt}>Confira a arte, navegue pelo carrossel e leia a legenda. Depois, registre sua decisão.</p>
-          <div className={hubStyles.reviewActions}><button className={hubStyles.approveButton} disabled={decisionSubmitting !== null} type="button" onClick={() => submitDecision('approved')}>{decisionSubmitting === 'approved' ? 'Aprovando…' : '✓ Aprovar publicação'}</button><button className={hubStyles.correctionButton} disabled={decisionSubmitting !== null} type="button" onClick={() => setCorrectionOpen(true)}>Pedir uma correção</button></div>
-          {correctionOpen && <div className={hubStyles.correctionBox}><label htmlFor="correction">O que precisa ser corrigido?</label><textarea id="correction" autoFocus value={comment} onChange={event => setComment(event.target.value)} placeholder="Indique a imagem, o trecho da legenda ou a informação que deve mudar." /><div className={hubStyles.correctionActions}><button className={hubStyles.quietButton} type="button" onClick={() => setCorrectionOpen(false)}>Cancelar</button><button className={hubStyles.correctionButton} disabled={decisionSubmitting !== null || !comment.trim()} type="button" onClick={() => submitDecision('changes_requested')}>{decisionSubmitting === 'changes_requested' ? 'Enviando…' : 'Enviar correção'}</button></div></div>}
+        {history.length > 0 && <>
+          {reviewView && <p className={feedStyles.divider}>Envios anteriores</p>}
+          <ul className={`${feedStyles.grid} ${feedStyles.historyGrid} ${reviewView ? feedStyles.historyDim : ''}`} aria-label="Publicações de envios anteriores">
+            {history.map(post => <li key={post.id} className={feedStyles.historyTile}>
+              <FeedThumb media={post.media} aspectRatio={post.aspect_ratio} />
+              <FormatIcon post={post} />
+            </li>)}
+          </ul>
         </>}
-
-        {currentIndex < batch.posts.length - 1 && <button className={hubStyles.nextButton} type="button" onClick={nextPost}>Próxima publicação →</button>}
-      </aside>
+      </div>
     </div>
+
+    {current && openIndex !== null && <PortalPostDialog
+      post={current}
+      index={openIndex}
+      total={posts.length}
+      client={feed.client}
+      handle={handle}
+      batchOpen={batchOpen}
+      submitting={decisionSubmitting}
+      notice={notice}
+      error={error}
+      onDecision={submitDecision}
+      onNavigate={openPost}
+      onClose={closePost}
+    />}
   </main>
 }
-
-
-
-
-
-
