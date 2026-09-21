@@ -5,8 +5,16 @@ import { createClient } from '@/lib/supabase/server'
 
 const schema = z.object({ calendar_id: z.string().uuid() })
 
+type Supabase = Awaited<ReturnType<typeof createClient>>
+type CalendarPost = { id: string; current_version: number; status: string }
+
 function slugify(value: string) {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'aprovacao'
+  return value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'aprovacao'
+}
+
+async function markPendingReview(supabase: Supabase, posts: CalendarPost[]) {
+  const pendingIds = posts.filter(post => ['draft', 'changes_requested', 'in_progress'].includes(post.status)).map(post => post.id)
+  if (pendingIds.length) await supabase.from('posts').update({ status: 'pending_review', updated_at: new Date().toISOString() }).in('id', pendingIds)
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ clientId: string }> }) {
@@ -23,14 +31,35 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   ])
   if (!client || !calendar) return NextResponse.json({ error: 'Cliente ou cronograma não encontrado.' }, { status: 404 })
 
-  const { data: existing } = await supabase.from('approval_batches').select('*')
-    .eq('client_id', clientId).eq('calendar_id', calendar.id).eq('status', 'open').maybeSingle()
-  const origin = new URL(request.url).origin
-  if (existing) return NextResponse.json({ batch: existing, portal_url: `${origin}/${client.portal_slug}`, reused: true })
-
   const { data: posts, error: postsError } = await supabase.from('posts').select('id, current_version, status')
     .eq('client_id', clientId).eq('calendar_id', calendar.id).not('status', 'in', '(archived)').order('scheduled_at', { ascending: true, nullsFirst: false })
   if (postsError) return NextResponse.json({ error: 'Não foi possível carregar os posts do cronograma.', detail: postsError.message }, { status: 500 })
+
+  const origin = new URL(request.url).origin
+  const portalUrl = `${origin}/${client.portal_slug}`
+  const { data: existing } = await supabase.from('approval_batches').select('*')
+    .eq('client_id', clientId).eq('calendar_id', calendar.id).eq('status', 'open').maybeSingle()
+
+  // Envio já aberto: o que já está no portal continua como está; só entram as publicações criadas depois.
+  if (existing) {
+    const { data: members, error: membersError } = await supabase.from('approval_batch_posts').select('post_id, position').eq('batch_id', existing.id)
+    if (membersError) return NextResponse.json({ error: 'Não foi possível ler o envio atual.', detail: membersError.message }, { status: 500 })
+    const inBatch = new Set((members ?? []).map(member => member.post_id))
+    const missing = (posts ?? []).filter(post => !inBatch.has(post.id))
+    if (missing.length) {
+      const nextPosition = Math.max(-1, ...(members ?? []).map(member => member.position)) + 1
+      const { error: addError } = await supabase.from('approval_batch_posts').insert(missing.map((post, index) => ({
+        batch_id: existing.id,
+        post_id: post.id,
+        position: nextPosition + index,
+        version_at_publish: post.current_version,
+      })))
+      if (addError) return NextResponse.json({ error: 'Não foi possível adicionar as publicações novas ao portal.', detail: addError.message }, { status: 500 })
+      await markPendingReview(supabase, missing)
+    }
+    return NextResponse.json({ batch: existing, portal_url: portalUrl, reused: true, added: missing.length })
+  }
+
   if (!posts?.length) return NextResponse.json({ error: 'Adicione ao menos uma publicação antes de liberar o portal.' }, { status: 400 })
 
   const baseSlug = slugify(calendar.name)
@@ -58,8 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Não foi possível fixar os posts deste envio.', detail: membershipError.message }, { status: 500 })
   }
 
-  const pendingIds = posts.filter(post => ['draft', 'changes_requested', 'in_progress'].includes(post.status)).map(post => post.id)
-  if (pendingIds.length) await supabase.from('posts').update({ status: 'pending_review', updated_at: new Date().toISOString() }).in('id', pendingIds)
+  await markPendingReview(supabase, posts)
 
-  return NextResponse.json({ batch, portal_url: `${origin}/${client.portal_slug}`, reused: false }, { status: 201 })
+  return NextResponse.json({ batch, portal_url: portalUrl, reused: false, added: posts.length }, { status: 201 })
 }

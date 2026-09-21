@@ -11,7 +11,7 @@ interface PortalInfo {
   portal_slug: string
   portal_url: string
   approvers: Array<{ id: string; email: string; name: string | null; active: boolean }>
-  batches: Array<{ id: string; calendar_id: string | null; title: string; slug: string; status: 'draft' | 'open' | 'closed' | 'archived'; published_at: string | null; approval_batch_posts?: Array<{ count: number }> }>
+  batches: Array<{ id: string; calendar_id: string | null; title: string; slug: string; status: 'draft' | 'open' | 'closed' | 'archived'; published_at: string | null; approval_batch_posts?: Array<{ post_id: string }> }>
 }
 
 function initials(name: string) { return name.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase() }
@@ -93,7 +93,11 @@ export default function ClientWorkspace({ clientId }: { clientId: string }) {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Não foi possível liberar o cronograma.')
       await navigator.clipboard.writeText(data.portal_url)
-      setNotice(data.reused ? 'Este cronograma já estava liberado. O link permanente foi copiado.' : 'Cronograma liberado com os posts atuais. O link permanente foi copiado.')
+      setNotice(!data.reused
+        ? 'Cronograma liberado com os posts atuais. O link permanente foi copiado.'
+        : data.added
+          ? `${data.added} ${data.added === 1 ? 'publicação nova entrou' : 'publicações novas entraram'} no portal. O link permanente foi copiado.`
+          : 'Todas as publicações deste cronograma já estão no portal. O link permanente foi copiado.')
       setCopied(true)
       await loadWorkspace()
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível liberar o cronograma.') }
@@ -172,7 +176,7 @@ export default function ClientWorkspace({ clientId }: { clientId: string }) {
     <section className={styles.surface} style={{ marginBottom: 22 }}>
       <div className={styles.surfaceHeader}><div><div className={styles.eyebrow} style={{ color: '#2878ff' }}>Portal permanente</div><strong style={{ color: '#13273f', fontSize: 17 }}>/{portal.portal_slug}</strong></div><button className={styles.primaryButton} type="button" onClick={copyPortal}>{copied ? 'Copiado ✓' : 'Copiar link do cliente'}</button></div>
       <div className={styles.surfaceBody} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(220px, .6fr)', gap: 18 }}>
-        <div><p style={{ color: '#607188', fontSize: 13, lineHeight: 1.65, margin: 0 }}>Este endereço não expira e não precisa ser gerado novamente. Cada cronograma liberado mantém a lista de posts fixa dentro do portal.</p><div style={{ background: '#eaf2ff', border: '1px solid #cddfff', borderRadius: 11, color: '#245da9', fontSize: 12, marginTop: 13, padding: 12, wordBreak: 'break-all' }}>{portal.portal_url}</div></div>
+        <div><p style={{ color: '#607188', fontSize: 13, lineHeight: 1.65, margin: 0 }}>Este endereço não expira e não precisa ser gerado novamente. Publicações criadas depois de liberar o cronograma só aparecem no portal quando você as envia pelo botão do cronograma.</p><div style={{ background: '#eaf2ff', border: '1px solid #cddfff', borderRadius: 11, color: '#245da9', fontSize: 12, marginTop: 13, padding: 12, wordBreak: 'break-all' }}>{portal.portal_url}</div></div>
         <div style={{ background: '#fff', border: '1px solid #dfe5ed', borderRadius: 12, padding: 13 }}><span style={{ color: '#7b8a9c', display: 'block', fontSize: 9, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>Acesso protegido</span><strong style={{ color: '#263a52', display: 'block', fontSize: 12, marginTop: 7 }}>E-mail + senha individual</strong><span style={{ color: '#8b98a8', display: 'block', fontSize: 10, marginTop: 5 }}>Cada decisão fica vinculada à pessoa que entrou.</span></div>
       </div>
     </section>
@@ -184,7 +188,9 @@ export default function ClientWorkspace({ clientId }: { clientId: string }) {
 
     <div className={styles.calendarStack}>{(client.content_calendars ?? []).map(calendar => {
       const batch = portal.batches.find(item => item.calendar_id === calendar.id && item.status === 'open')
-      return <section className={styles.calendar} key={calendar.id}><header className={styles.calendarHeader}><div><h2 className={styles.calendarTitle}>{calendar.name}</h2><div className={styles.calendarDates}>{formatDate(calendar.starts_on)} {calendar.ends_on ? `— ${formatDate(calendar.ends_on)}` : ''} · {CALENDAR_STATUS_LABELS[calendar.status]}{batch ? ' · Portal liberado' : ''}</div></div><div className={styles.calendarActions}><button className={styles.quietButton} type="button" onClick={() => openRenameCalendar(calendar)}>Renomear</button>{batch ? <button className={styles.quietButton} type="button" onClick={copyPortal}>✓ Copiar portal</button> : <button className={styles.quietButton} disabled={releasing === calendar.id || !calendar.posts.length} type="button" onClick={() => releaseCalendar(calendar)}>{releasing === calendar.id ? 'Liberando…' : 'Liberar posts no portal'}</button>}<Link className={styles.primaryButton} href={`/admin/clientes/${clientId}/posts/novo?calendar=${calendar.id}`}>＋ Publicação</Link></div></header><PostRows posts={calendar.posts} clientId={clientId} /></section>
+      const inPortal = new Set(batch?.approval_batch_posts?.map(item => item.post_id))
+      const notSent = batch ? calendar.posts.filter(post => post.status !== 'archived' && !inPortal.has(post.id)).length : 0
+      return <section className={styles.calendar} key={calendar.id}><header className={styles.calendarHeader}><div><h2 className={styles.calendarTitle}>{calendar.name}</h2><div className={styles.calendarDates}>{formatDate(calendar.starts_on)} {calendar.ends_on ? `— ${formatDate(calendar.ends_on)}` : ''} · {CALENDAR_STATUS_LABELS[calendar.status]}{batch ? ' · Portal liberado' : ''}</div></div><div className={styles.calendarActions}><button className={styles.quietButton} type="button" onClick={() => openRenameCalendar(calendar)}>Renomear</button>{batch && notSent > 0 ? <button className={styles.quietButton} disabled={releasing === calendar.id} type="button" onClick={() => releaseCalendar(calendar)}>{releasing === calendar.id ? 'Enviando…' : `Enviar ${notSent} ${notSent === 1 ? 'nova' : 'novas'} ao portal`}</button> : batch ? <button className={styles.quietButton} type="button" onClick={copyPortal}>✓ Copiar portal</button> : <button className={styles.quietButton} disabled={releasing === calendar.id || !calendar.posts.length} type="button" onClick={() => releaseCalendar(calendar)}>{releasing === calendar.id ? 'Liberando…' : 'Liberar posts no portal'}</button>}<Link className={styles.primaryButton} href={`/admin/clientes/${clientId}/posts/novo?calendar=${calendar.id}`}>＋ Publicação</Link></div></header><PostRows posts={calendar.posts} clientId={clientId} /></section>
     })}
       {Boolean(client.posts?.length) && <section className={styles.calendar}><header className={styles.calendarHeader}><div><h2 className={styles.calendarTitle}>Publicações avulsas</h2><div className={styles.calendarDates}>Conteúdos ainda sem cronograma</div></div><Link className={styles.primaryButton} href={`/admin/clientes/${clientId}/posts/novo`}>＋ Publicação</Link></header><PostRows posts={client.posts ?? []} clientId={clientId} /></section>}
       {!(client.content_calendars?.length) && !(client.posts?.length) && <div className={styles.emptyState}><strong>Esta pasta ainda está vazia</strong><span>Crie um cronograma para organizar a primeira sequência de posts.</span><button className={styles.primaryButton} type="button" onClick={() => setCalendarModal(true)}>Criar cronograma</button></div>}
