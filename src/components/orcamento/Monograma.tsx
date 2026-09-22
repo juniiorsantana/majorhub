@@ -21,14 +21,18 @@ export function Monograma({ marca, tamanho = 'sm', invertido = false }: Props) {
 
   return (
     <div className="flex items-center gap-4">
-      <span
-        aria-hidden="true"
-        className={`orc-display flex items-center justify-center text-[var(--orc-accent)] ${d.box} ${d.letra}`}
-      >
-        {marca.monograma}
-      </span>
+      {marca.monograma && (
+        <>
+          <span
+            aria-hidden="true"
+            className={`orc-display flex items-center justify-center text-[var(--orc-accent)] ${d.box} ${d.letra}`}
+          >
+            {marca.monograma}
+          </span>
 
-      <span aria-hidden="true" className={`h-9 w-px ${corLinha}`} />
+          <span aria-hidden="true" className={`h-9 w-px ${corLinha}`} />
+        </>
+      )}
 
       <span className="flex flex-col leading-tight">
         <span

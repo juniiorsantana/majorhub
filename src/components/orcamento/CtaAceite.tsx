@@ -110,6 +110,7 @@ export function CtaAceite({ orcamento, validade }: Props) {
 
           <p className="text-xs leading-relaxed text-[var(--orc-contrast-soft)]">
             Proposta elaborada por {orcamento.contato.responsavel}
+            {orcamento.parceria && ` em parceria com ${orcamento.parceria.nome}`}
             <span className="mt-1 block">Válida até {validade}</span>
           </p>
         </div>

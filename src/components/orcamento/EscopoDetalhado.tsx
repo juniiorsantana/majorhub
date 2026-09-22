@@ -19,13 +19,19 @@ export function EscopoDetalhado({ orcamento }: { orcamento: Orcamento }) {
           </p>
         </RevealWrapper>
 
-        <RevealWrapper delay={0.14}>
-          <p className="mt-5 max-w-xl leading-relaxed text-[var(--orc-text-soft)]">
-            A disponibilidade de cada frente depende do plano escolhido.
-          </p>
-        </RevealWrapper>
+        {orcamento.planos.length > 1 && (
+          <RevealWrapper delay={0.14}>
+            <p className="mt-5 max-w-xl leading-relaxed text-[var(--orc-text-soft)]">
+              A disponibilidade de cada frente depende do plano escolhido.
+            </p>
+          </RevealWrapper>
+        )}
 
-        <div className="mt-16 grid gap-x-14 gap-y-14 md:grid-cols-2">
+        <div
+          className={`mt-16 grid gap-x-14 gap-y-14 md:grid-cols-2 ${
+            orcamento.escopo.length === 3 || orcamento.escopo.length > 4 ? 'lg:grid-cols-3' : ''
+          }`}
+        >
           {orcamento.escopo.map((bloco, i) => (
             <RevealWrapper key={bloco.titulo} delay={0.1 + i * 0.08} className="h-full">
               <div className="h-full">

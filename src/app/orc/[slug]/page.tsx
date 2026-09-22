@@ -8,6 +8,7 @@ import {
   getValidadeFormatada,
 } from '@/content/orcamentos'
 import { OrcamentoHero } from '@/components/orcamento/OrcamentoHero'
+import { Parceria } from '@/components/orcamento/Parceria'
 import { Investimento } from '@/components/orcamento/Investimento'
 import { EscopoDetalhado } from '@/components/orcamento/EscopoDetalhado'
 import { Cronograma } from '@/components/orcamento/Cronograma'
@@ -53,6 +54,7 @@ export default async function OrcamentoPage({ params }: { params: Promise<{ slug
       style={getTemaStyle(orcamento.tema)}
     >
       <OrcamentoHero orcamento={orcamento} validade={validade} />
+      <Parceria orcamento={orcamento} />
       <Investimento orcamento={orcamento} />
       <EscopoDetalhado orcamento={orcamento} />
       <Cronograma orcamento={orcamento} />

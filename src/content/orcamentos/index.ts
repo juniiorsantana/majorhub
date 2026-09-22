@@ -1,9 +1,11 @@
 import type { Orcamento, PlanoOrcamento } from './types'
 import { costalima } from './costalima'
+import { mariamarcoskia } from './mariamarcoskia'
 
 /** Registro de propostas. Para um novo cliente: crie o arquivo e adicione aqui. */
 const orcamentos: Record<string, Orcamento> = {
   [costalima.slug]: costalima,
+  [mariamarcoskia.slug]: mariamarcoskia,
 }
 
 export function getOrcamento(slug: string): Orcamento | undefined {

@@ -47,7 +47,74 @@ function FitaCondicao({ condicao }: { condicao: NonNullable<PlanoOrcamento['cond
   )
 }
 
+function Aceite({ orcamento, plano }: { orcamento: Orcamento; plano: PlanoOrcamento }) {
+  const href = getDestinoAceite(orcamento, plano)
+  const destaque = Boolean(plano.destaque)
+
+  return plano.condicao ? (
+    <div className="border border-[var(--orc-accent)]">
+      <FitaCondicao condicao={plano.condicao} />
+      <BotaoAceite href={href} destaque={destaque} emFita />
+    </div>
+  ) : (
+    <BotaoAceite href={href} destaque={destaque} emFita={false} />
+  )
+}
+
+/** Plano único: sem comparação, o card ganha a largura toda. */
+function PlanoUnico({ orcamento, plano }: { orcamento: Orcamento; plano: PlanoOrcamento }) {
+  return (
+    <div className="mt-16 grid gap-x-16 gap-y-12 border-y border-[var(--orc-line)] py-12 lg:grid-cols-[0.85fr_1.15fr]">
+      <RevealWrapper delay={0.1}>
+        <article className="flex h-full flex-col">
+          <div className="flex items-center gap-3">
+            <span aria-hidden="true" className="h-px w-6 bg-[var(--orc-accent)]" />
+            <span className="orc-label text-[var(--orc-accent)]">O plano</span>
+          </div>
+
+          <h3 className="orc-display mt-6 text-[clamp(30px,3.6vw,40px)] leading-tight text-[var(--orc-text)]">
+            {plano.nome}
+          </h3>
+
+          <p className="mt-4 max-w-md leading-relaxed text-[var(--orc-text-soft)]">{plano.resumo}</p>
+
+          <div className="mt-10">
+            <p className="flex items-baseline gap-1.5">
+              <span className="orc-display text-[clamp(42px,5vw,58px)] text-[var(--orc-text)]">
+                {plano.valor}
+              </span>
+              <span className="text-sm text-[var(--orc-text-soft)]">{plano.periodo}</span>
+            </p>
+            {plano.observacao && (
+              <p className="mt-2 text-xs text-[var(--orc-text-soft)]">{plano.observacao}</p>
+            )}
+          </div>
+
+          <div className="mt-10 lg:mt-auto lg:pt-10">
+            <Aceite orcamento={orcamento} plano={plano} />
+          </div>
+        </article>
+      </RevealWrapper>
+
+      <RevealWrapper delay={0.18}>
+        <div>
+          <ul className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
+            {plano.inclui.map(item => (
+              <li key={item} className="flex gap-4 text-sm leading-relaxed text-[var(--orc-text)]">
+                <CheckIcon className="text-[var(--orc-accent)]" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </RevealWrapper>
+    </div>
+  )
+}
+
 export function Investimento({ orcamento }: { orcamento: Orcamento }) {
+  const unico = orcamento.planos.length === 1
+
   return (
     <section id="investimento" className="relative py-20">
       <div className="mx-auto max-w-7xl px-6 md:px-12">
@@ -60,19 +127,32 @@ export function Investimento({ orcamento }: { orcamento: Orcamento }) {
 
         <RevealWrapper delay={0.08}>
           <p className="orc-display mt-8 max-w-2xl text-[clamp(26px,3.4vw,38px)] text-[var(--orc-text)]">
-            Três formatos possíveis,{' '}
-            <span className="italic text-[var(--orc-accent)]">um mesmo cuidado.</span>
+            {unico ? (
+              <>
+                Um plano completo,{' '}
+                <span className="italic text-[var(--orc-accent)]">do jeito que o seu momento pede.</span>
+              </>
+            ) : (
+              <>
+                Três formatos possíveis,{' '}
+                <span className="italic text-[var(--orc-accent)]">um mesmo cuidado.</span>
+              </>
+            )}
           </p>
         </RevealWrapper>
 
         <RevealWrapper delay={0.14}>
           <p className="mt-5 max-w-xl leading-relaxed text-[var(--orc-text-soft)]">
-            Todos os planos são mensais e podem evoluir a qualquer momento — começar menor não
-            significa começar devagar.
+            {unico
+              ? 'Investimento mensal, com entregas definidas e acompanhamento de perto desde o primeiro mês.'
+              : 'Todos os planos são mensais e podem evoluir a qualquer momento — começar menor não significa começar devagar.'}
           </p>
         </RevealWrapper>
 
-        {/* Colunas separadas por filete: lado a lado no desktop, empilhadas no mobile */}
+        {unico ? (
+          <PlanoUnico orcamento={orcamento} plano={orcamento.planos[0]} />
+        ) : (
+        /* Colunas separadas por filete: lado a lado no desktop, empilhadas no mobile */
         <div className="mt-16 grid divide-y divide-[var(--orc-line)] border-y border-[var(--orc-line)] lg:grid-cols-3 lg:divide-x lg:divide-y-0">
           {orcamento.planos.map((plano, i) => (
             <RevealWrapper key={plano.id} delay={0.1 + i * 0.08} className="h-full">
@@ -132,32 +212,18 @@ export function Investimento({ orcamento }: { orcamento: Orcamento }) {
                   ))}
                 </ul>
 
-                {plano.condicao ? (
-                  <div className="mt-10 border border-[var(--orc-accent)]">
-                    <FitaCondicao condicao={plano.condicao} />
-                    <BotaoAceite
-                      href={getDestinoAceite(orcamento, plano)}
-                      destaque={Boolean(plano.destaque)}
-                      emFita
-                    />
-                  </div>
-                ) : (
-                  <div className="mt-10">
-                    <BotaoAceite
-                      href={getDestinoAceite(orcamento, plano)}
-                      destaque={Boolean(plano.destaque)}
-                      emFita={false}
-                    />
-                  </div>
-                )}
+                <div className="mt-10">
+                  <Aceite orcamento={orcamento} plano={plano} />
+                </div>
               </article>
             </RevealWrapper>
           ))}
         </div>
+        )}
 
         <RevealWrapper delay={0.3}>
           <p className="mt-8 text-sm text-[var(--orc-text-soft)]">
-            Em dúvida sobre qual escolher?{' '}
+            {unico ? 'Ficou alguma dúvida?' : 'Em dúvida sobre qual escolher?'}{' '}
             <a
               href={`https://wa.me/${orcamento.contato.whatsapp}`}
               target="_blank"

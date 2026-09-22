@@ -19,7 +19,7 @@ function formatarEmissao(iso: string) {
 }
 
 export function OrcamentoHero({ orcamento, validade }: Props) {
-  const { marca, cliente, proposta, hero, alinhamentos } = orcamento
+  const { marca, cliente, proposta, hero, alinhamentos, parceria } = orcamento
   const emissao = formatarEmissao(proposta.emitidaEm)
 
   return (
@@ -30,7 +30,15 @@ export function OrcamentoHero({ orcamento, validade }: Props) {
 
         <div className="flex items-center gap-4">
           <span aria-hidden="true" className="hidden h-px w-12 bg-[var(--orc-accent)] sm:block" />
-          <span className="orc-label text-[var(--orc-text-soft)]">Proposta comercial</span>
+          <span className="orc-label text-[var(--orc-text-soft)]">
+            {parceria ? (
+              <>
+                MajorHub <span className="text-[var(--orc-accent)]">×</span> {parceria.nome}
+              </>
+            ) : (
+              'Proposta comercial'
+            )}
+          </span>
         </div>
       </div>
 
@@ -95,14 +103,23 @@ export function OrcamentoHero({ orcamento, validade }: Props) {
               className="object-cover"
             />
           ) : (
-            /* Sem imagem definida: painel tipográfico com o monograma em escala */
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span
-                aria-hidden="true"
-                className="orc-display select-none text-[clamp(140px,20vw,260px)] leading-none text-[var(--orc-accent)] opacity-25"
-              >
-                {marca.monograma}
-              </span>
+            /* Sem imagem definida: painel tipográfico com o monograma em escala (ou o nome) */
+            <div className="absolute inset-0 flex items-center justify-center px-12">
+              {marca.monograma ? (
+                <span
+                  aria-hidden="true"
+                  className="orc-display select-none text-[clamp(140px,20vw,260px)] leading-none text-[var(--orc-accent)] opacity-25"
+                >
+                  {marca.monograma}
+                </span>
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="orc-display select-none text-center text-[clamp(44px,6vw,84px)] leading-[1.05] text-[var(--orc-accent)] opacity-30"
+                >
+                  {marca.nome}
+                </span>
+              )}
               <span
                 aria-hidden="true"
                 className="absolute inset-6 border border-[var(--orc-contrast-soft)] opacity-25 lg:inset-12"

@@ -60,8 +60,8 @@ export interface Orcamento {
   slug: string
   /** Identidade do cliente exibida no cabeçalho e no rodapé da proposta. */
   marca: {
-    /** Iniciais do monograma, ex.: 'CL'. Duas letras funcionam melhor. */
-    monograma: string
+    /** Iniciais do monograma, ex.: 'CL'. Vazio = só o nome, sem monograma. */
+    monograma?: string
     nome: string
     /** Linha de apoio sob o nome, ex.: 'Advocacia'. */
     assinatura?: string
@@ -85,9 +85,21 @@ export interface Orcamento {
   /** Visual da proposta. Presets em src/app/orc/orcamento.css. */
   tema: TemaOrcamento
   hero?: {
-    /** Caminho em /public. Vazio = painel tipográfico com o monograma. */
+    /** Caminho em /public. Vazio = painel tipográfico com o monograma (ou o nome). */
     imagem?: string
     imagemAlt?: string
+  }
+  /**
+   * Proposta feita em conjunto com outra agência. Aparece no cabeçalho,
+   * numa seção de quem faz o quê e na assinatura do rodapé.
+   */
+  parceria?: {
+    /** Nome da agência parceira, ex.: 'Vimark'. */
+    nome: string
+    /** Frase curta sobre por que a entrega é conjunta. */
+    descricao: string
+    /** Papel de cada agência, na ordem em que devem aparecer. */
+    frentes: { agencia: string; papel: string; itens: string[] }[]
   }
   /** O que ficou combinado na conversa — reforça que a proposta é sob medida. */
   alinhamentos: string[]
