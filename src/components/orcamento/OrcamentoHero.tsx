@@ -101,6 +101,7 @@ export function OrcamentoHero({ orcamento, validade }: Props) {
               priority
               sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover"
+              style={hero.posicao ? { objectPosition: hero.posicao } : undefined}
             />
           ) : (
             /* Sem imagem definida: painel tipográfico com o monograma em escala (ou o nome) */

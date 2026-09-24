@@ -153,7 +153,11 @@ export function Investimento({ orcamento }: { orcamento: Orcamento }) {
           <PlanoUnico orcamento={orcamento} plano={orcamento.planos[0]} />
         ) : (
         /* Colunas separadas por filete: lado a lado no desktop, empilhadas no mobile */
-        <div className="mt-16 grid divide-y divide-[var(--orc-line)] border-y border-[var(--orc-line)] lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+        <div
+          className={`mt-16 grid divide-y divide-[var(--orc-line)] border-y border-[var(--orc-line)] lg:divide-x lg:divide-y-0 ${
+            orcamento.planos.length === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3'
+          }`}
+        >
           {orcamento.planos.map((plano, i) => (
             <RevealWrapper key={plano.id} delay={0.1 + i * 0.08} className="h-full">
               <article

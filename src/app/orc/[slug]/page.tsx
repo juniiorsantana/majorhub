@@ -9,6 +9,7 @@ import {
 } from '@/content/orcamentos'
 import { OrcamentoHero } from '@/components/orcamento/OrcamentoHero'
 import { Parceria } from '@/components/orcamento/Parceria'
+import { FaixaImagem } from '@/components/orcamento/FaixaImagem'
 import { Investimento } from '@/components/orcamento/Investimento'
 import { EscopoDetalhado } from '@/components/orcamento/EscopoDetalhado'
 import { Cronograma } from '@/components/orcamento/Cronograma'
@@ -55,6 +56,7 @@ export default async function OrcamentoPage({ params }: { params: Promise<{ slug
     >
       <OrcamentoHero orcamento={orcamento} validade={validade} />
       <Parceria orcamento={orcamento} />
+      <FaixaImagem orcamento={orcamento} />
       <Investimento orcamento={orcamento} />
       <EscopoDetalhado orcamento={orcamento} />
       <Cronograma orcamento={orcamento} />

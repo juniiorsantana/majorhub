@@ -88,6 +88,16 @@ export interface Orcamento {
     /** Caminho em /public. Vazio = painel tipográfico com o monograma (ou o nome). */
     imagem?: string
     imagemAlt?: string
+    /** object-position da imagem no corte do hero, ex.: 'right'. Vazio = centro. */
+    posicao?: string
+  }
+  /** Imagem larga exibida logo depois da parceria (ou do cabeçalho). */
+  faixaImagem?: {
+    /** Caminho em /public. */
+    imagem: string
+    imagemAlt: string
+    /** Legenda curta sob a imagem. */
+    legenda?: string
   }
   /**
    * Proposta feita em conjunto com outra agência. Aparece no cabeçalho,
