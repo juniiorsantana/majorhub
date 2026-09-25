@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Apresentações estáticas de clientes em public/apresentacao/<slug>/index.html
+  async rewrites() {
+    return [
+      {
+        source: "/apresentacao/:slug",
+        destination: "/apresentacao/:slug/index.html",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

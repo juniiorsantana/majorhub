@@ -6,8 +6,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        // /orc/ = propostas comerciais, acessadas só por link direto.
-        disallow: ['/api/', '/orc/'],
+        // /orc/ e /apresentacao/ = material de cliente, acessado só por link direto.
+        disallow: ['/api/', '/orc/', '/apresentacao/'],
       },
     ],
     sitemap: 'https://majorhub.com.br/sitemap.xml',
