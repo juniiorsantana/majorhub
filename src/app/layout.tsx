@@ -3,6 +3,7 @@ import { Sora, Inter } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 import SmoothScroll from '@/components/SmoothScroll'
+import { EMPRESA } from '@/lib/empresa'
 
 // Preencha com os IDs reais para ativar os trackers.
 // Enquanto vazios, os scripts não são injetados (evita 404 e erros no console).
@@ -55,6 +56,17 @@ const organizationJsonLd = {
   '@type': ['Organization', 'ProfessionalService'],
   '@id': 'https://majorhub.com.br/#organization',
   name: 'MajorHub',
+  legalName: EMPRESA.razaoSocial,
+  taxID: EMPRESA.cnpj,
+  email: EMPRESA.email,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: EMPRESA.endereco.logradouro,
+    addressLocality: EMPRESA.endereco.cidade,
+    addressRegion: EMPRESA.endereco.uf,
+    postalCode: EMPRESA.endereco.cep,
+    addressCountry: 'BR',
+  },
   url: 'https://majorhub.com.br',
   logo: 'https://majorhub.com.br/opengraph-image',
   description:

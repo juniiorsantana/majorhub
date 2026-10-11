@@ -30,6 +30,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.8,
     },
+    {
+      url: `${BASE_URL}/privacidade`,
+      lastModified: new Date('2026-10-11T00:00:00'),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
     ...posts,
   ]
 }
